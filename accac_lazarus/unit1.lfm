@@ -1,0 +1,33 @@
+object FormMain: TFormMain
+  Left = 203
+  Height = 715
+  Top = 0
+  Width = 1000
+  Caption = 'ACCAC'
+  OnCreate = FormCreate
+  OnPaint = FormPaint
+  LCLVersion = '2.2.6.0'
+  object SQLQuery1: TSQLQuery
+    FieldDefs = <>
+    Database = PQConnection1
+    Transaction = SQLTransaction1
+    Params = <>
+    Macros = <>
+    Left = 48
+    Top = 16
+  end
+  object SQLTransaction1: TSQLTransaction
+    Active = False
+    Database = PQConnection1
+    Left = 48
+    Top = 80
+  end
+  object PQConnection1: TPQConnection
+    Connected = False
+    LoginPrompt = False
+    KeepConnection = False
+    Transaction = SQLTransaction1
+    Left = 48
+    Top = 152
+  end
+end

@@ -1,0 +1,74 @@
+object FormSQL: TFormSQL
+  Left = 664
+  Height = 241
+  Top = 450
+  Width = 481
+  Caption = 'SQL-редактор'
+  ClientHeight = 241
+  ClientWidth = 481
+  Color = clNone
+  OnCreate = FormCreate
+  LCLVersion = '2.2.6.0'
+  object Label1: TLabel
+    Left = 24
+    Height = 17
+    Top = 8
+    Width = 145
+    Caption = 'Введите SQL-запрос'
+    ParentColor = False
+  end
+  object MemoSQL: TMemo
+    Left = 16
+    Height = 130
+    Top = 40
+    Width = 456
+    Font.Height = -16
+    Lines.Strings = (
+      'MemoSQL'
+    )
+    ParentFont = False
+    ScrollBars = ssBoth
+    TabOrder = 0
+    WordWrap = False
+  end
+  object btnExecute: TButton
+    Left = 320
+    Height = 41
+    Top = 184
+    Width = 152
+    Caption = 'Выполнить'
+    Color = clMoneyGreen
+    OnClick = btnExecuteClick
+    TabOrder = 1
+  end
+  object btnClose: TButton
+    Left = 152
+    Height = 41
+    Top = 184
+    Width = 152
+    Caption = 'Закрыть'
+    Color = clNone
+    OnClick = btnCloseClick
+    TabOrder = 2
+  end
+  object SQLTransaction1: TSQLTransaction
+    Active = False
+    Database = PQConnection1
+    Left = 248
+  end
+  object PQConnection1: TPQConnection
+    Connected = False
+    LoginPrompt = False
+    KeepConnection = False
+    Transaction = SQLTransaction1
+    Left = 352
+  end
+  object SQLQuery1: TSQLQuery
+    FieldDefs = <>
+    Database = PQConnection1
+    Transaction = SQLTransaction1
+    Params = <>
+    Macros = <>
+    Left = 440
+  end
+end
