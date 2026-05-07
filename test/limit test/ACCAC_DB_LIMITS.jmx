@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="DB_HOST" elementType="Argument">
+            <stringProp name="Argument.name">DB_HOST</stringProp>
+            <stringProp name="Argument.value">127.0.0.1</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_PORT" elementType="Argument">
+            <stringProp name="Argument.name">DB_PORT</stringProp>
+            <stringProp name="Argument.value">5433</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_NAME" elementType="Argument">
+            <stringProp name="Argument.name">DB_NAME</stringProp>
+            <stringProp name="Argument.value">db_ics_accac</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_SCHEMA" elementType="Argument">
+            <stringProp name="Argument.name">DB_SCHEMA</stringProp>
+            <stringProp name="Argument.value">sc_accac</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_USER" elementType="Argument">
+            <stringProp name="Argument.name">DB_USER</stringProp>
+            <stringProp name="Argument.value">jmeter_accac</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_PASS" elementType="Argument">
+            <stringProp name="Argument.name">DB_PASS</stringProp>
+            <stringProp name="Argument.value">jmeter123</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </Arguments>
+      <hashTree/>
+      <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="JDBC ACCAC Connection">
+        <boolProp name="autocommit">true</boolProp>
+        <stringProp name="checkQuery"></stringProp>
+        <stringProp name="connectionAge">5000</stringProp>
+        <stringProp name="connectionProperties"></stringProp>
+        <stringProp name="dataSource">pg_accac</stringProp>
+        <stringProp name="dbUrl">jdbc:postgresql://127.0.0.1:5433/db_ics_accac</stringProp>
+        <stringProp name="driver">org.postgresql.Driver</stringProp>
+        <stringProp name="initQuery"></stringProp>
+        <boolProp name="keepAlive">true</boolProp>
+        <stringProp name="password">jmeter123</stringProp>
+        <stringProp name="poolMax">${__P(pool,10)}</stringProp>
+        <boolProp name="preinit">false</boolProp>
+        <stringProp name="timeout">10000</stringProp>
+        <stringProp name="transactionIsolation">DEFAULT</stringProp>
+        <stringProp name="trimInterval">60000</stringProp>
+        <stringProp name="username">jmeter_accac</stringProp>
+      </JDBCDataSource>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="01 Functional DB Check" enabled="false">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="01 DB Connection OK">
+          <stringProp name="dataSource">pg_accac</stringProp>
+          <stringProp name="query">SELECT &apos;OK&apos; AS result, current_database() AS db_name;</stringProp>
+          <stringProp name="queryArguments"></stringProp>
+          <stringProp name="queryArgumentsTypes"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="queryType">Select Statement</stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultVariable"></stringProp>
+          <stringProp name="variableNames"></stringProp>
+          <stringProp name="TestPlan.comments">Проверка подключения</stringProp>
+        </JDBCSampler>
+        <hashTree/>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="02 UI Components Exist">
+          <stringProp name="dataSource">pg_accac</stringProp>
+          <stringProp name="queryType">Select Statement</stringProp>
+          <stringProp name="query">SELECT
+	CASE
+		WHEN COUNT(*) &gt; 0 THEN &apos;OK&apos;
+		ELSE &apos;FAIL&apos;
+	END AS result,
+	COUNT(*) AS cmp_count
+FROM sc_accac.&quot;tb_CMP&quot;
+WHERE &quot;ni_LYT_id&quot; = 1;</stringProp>
+          <stringProp name="queryArguments"></stringProp>
+          <stringProp name="queryArgumentsTypes"></stringProp>
+          <stringProp name="variableNames"></stringProp>
+          <stringProp name="resultVariable"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+          <stringProp name="TestPlan.comments">Проверсяем что из БД реально читаются компоненты интерфейса ACCAC</stringProp>
+        </JDBCSampler>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check UI Components OK">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="2524">OK</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">2</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="03 UI Coordinates Valid">
+          <stringProp name="dataSource">pg_accac</stringProp>
+          <stringProp name="queryType">Select Statement</stringProp>
+          <stringProp name="query">SELECT
+    CASE
+        WHEN COUNT(*) = 0 THEN &apos;OK&apos;
+        ELSE &apos;FAIL&apos;
+    END AS result,
+    COUNT(*) AS invalid_count
+FROM sc_accac.&quot;tb_CMP&quot;
+WHERE
+    (&quot;ni_x&quot; IS NOT NULL AND &quot;ni_x&quot; &lt; 0)
+    OR (&quot;ni_y&quot; IS NOT NULL AND &quot;ni_y&quot; &lt; 0)
+    OR (&quot;ni_width&quot; IS NOT NULL AND &quot;ni_width&quot; &lt;= 0)
+    OR (&quot;ni_height&quot; IS NOT NULL AND &quot;ni_height&quot; &lt;= 0);</stringProp>
+          <stringProp name="queryArguments"></stringProp>
+          <stringProp name="queryArgumentsTypes"></stringProp>
+          <stringProp name="variableNames"></stringProp>
+          <stringProp name="resultVariable"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+          <stringProp name="TestPlan.comments">Проверяем, что размеры и любыче числа валидны</stringProp>
+        </JDBCSampler>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check UI Coordinates OK">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="2524">OK</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">2</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="04 Antenna Relations Valid">
+          <stringProp name="dataSource">pg_accac</stringProp>
+          <stringProp name="queryType">Select Statement</stringProp>
+          <stringProp name="query">SELECT
+    CASE
+        WHEN COUNT(*) = 0 THEN &apos;OK&apos;
+        ELSE &apos;FAIL&apos;
+    END AS result,
+    COUNT(*) AS invalid_count
+FROM sc_accac.&quot;tb_ANT&quot; a
+LEFT JOIN sc_accac.&quot;tb_MDL&quot; m
+    ON m.&quot;ni_id&quot; = a.&quot;ni_MDL_id&quot;
+LEFT JOIN sc_accac.&quot;tb_CITY&quot; c
+    ON c.&quot;ni_id&quot; = a.&quot;ni_CITY_id&quot;
+LEFT JOIN sc_accac.&quot;tb_STAT&quot; s
+    ON s.&quot;ni_id&quot; = a.&quot;ni_STAT_id&quot;
+WHERE
+    m.&quot;ni_id&quot; IS NULL
+    OR c.&quot;ni_id&quot; IS NULL
+    OR s.&quot;ni_id&quot; IS NULL;</stringProp>
+          <stringProp name="queryArguments"></stringProp>
+          <stringProp name="queryArgumentsTypes"></stringProp>
+          <stringProp name="variableNames"></stringProp>
+          <stringProp name="resultVariable"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+          <stringProp name="TestPlan.comments">Проверка ссылочной целостности антенн</stringProp>
+        </JDBCSampler>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check Antenna Relations OK">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="2524">OK</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">2</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="05 UI Layout Load">
+          <stringProp name="dataSource">pg_accac</stringProp>
+          <stringProp name="queryType">Select Statement</stringProp>
+          <stringProp name="query">SELECT
+    c.&quot;ni_id&quot;,
+    c.&quot;cv_type&quot;,
+    c.&quot;ni_x&quot;,
+    c.&quot;ni_y&quot;,
+    c.&quot;ni_width&quot;,
+    c.&quot;ni_height&quot;,
+    c.&quot;cv_text&quot;,
+    c.&quot;bl_visible&quot;,
+    ctr.&quot;cv_name&quot; AS center_name,
+    city.&quot;cv_name&quot; AS city_name,
+    ant.&quot;ni_id&quot; AS antenna_id,
+    mdl.&quot;cv_name&quot; AS model_name,
+    stat.&quot;cv_name&quot; AS status_name
+FROM sc_accac.&quot;tb_CMP&quot; c
+LEFT JOIN sc_accac.&quot;tb_CTR&quot; ctr
+    ON ctr.&quot;ni_id&quot; = c.&quot;ni_CTR_id&quot;
+LEFT JOIN sc_accac.&quot;tb_CITY&quot; city
+    ON city.&quot;ni_id&quot; = c.&quot;ni_CITY_id&quot;
+LEFT JOIN sc_accac.&quot;tb_ANT&quot; ant
+    ON ant.&quot;ni_id&quot; = c.&quot;ni_ANT_id&quot;
+LEFT JOIN sc_accac.&quot;tb_MDL&quot; mdl
+    ON mdl.&quot;ni_id&quot; = ant.&quot;ni_MDL_id&quot;
+LEFT JOIN sc_accac.&quot;tb_STAT&quot; stat
+    ON stat.&quot;ni_id&quot; = ant.&quot;ni_STAT_id&quot;
+WHERE c.&quot;ni_LYT_id&quot; = 1
+  AND c.&quot;bl_visible&quot; = TRUE
+ORDER BY c.&quot;ni_id&quot;;</stringProp>
+          <stringProp name="queryArguments"></stringProp>
+          <stringProp name="queryArgumentsTypes"></stringProp>
+          <stringProp name="variableNames"></stringProp>
+          <stringProp name="resultVariable"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+          <stringProp name="TestPlan.comments">Проверка загрузки макета интерфейса</stringProp>
+        </JDBCSampler>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="05 UI Layout Load">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="104810015">ni_id</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">2</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="02 DB Limit Test ACCAC">
+        <stringProp name="TestPlan.comments">Нагрузочное тестирование</stringProp>
+        <stringProp name="ThreadGroup.num_threads">${__P(threads,10)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(ramp,60)}</stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${__P(duration,300)}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">${__P(loops,-1)}</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CMP IDs">
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="fileEncoding"></stringProp>
+          <stringProp name="filename">${__P(cmp_ids,/home/sakurelle/ACCAC/test/cmp_ids.csv)}</stringProp>
+          <boolProp name="ignoreFirstLine">false</boolProp>
+          <boolProp name="quotedData">false</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <stringProp name="shareMode">shareMode.all</stringProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="variableNames">CMP_ID</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="ANT IDs">
+          <stringProp name="filename">${__P(ant_ids,/home/sakurelle/ACCAC/test/ant_ids.csv)}</stringProp>
+          <stringProp name="fileEncoding"></stringProp>
+          <stringProp name="variableNames">ANT_ID</stringProp>
+          <boolProp name="ignoreFirstLine">false</boolProp>
+          <stringProp name="delimiter">,</stringProp>
+          <boolProp name="quotedData">false</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="shareMode">shareMode.all</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Load UI Component By ID">
+          <stringProp name="dataSource">pg_accac</stringProp>
+          <stringProp name="queryType">Prepared Select Statement</stringProp>
+          <stringProp name="query">SELECT
+    c.&quot;ni_id&quot;,
+    c.&quot;cv_type&quot;,
+    c.&quot;ni_x&quot;,
+    c.&quot;ni_y&quot;,
+    c.&quot;ni_width&quot;,
+    c.&quot;ni_height&quot;,
+    c.&quot;cv_text&quot;,
+    c.&quot;bl_visible&quot;
+FROM sc_accac.&quot;tb_CMP&quot; c
+WHERE c.&quot;ni_id&quot; = ?;</stringProp>
+          <stringProp name="queryArguments">${CMP_ID}</stringProp>
+          <stringProp name="queryArgumentsTypes">INTEGER</stringProp>
+          <stringProp name="variableNames"></stringProp>
+          <stringProp name="resultVariable"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+        </JDBCSampler>
+        <hashTree/>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Load Antenna By ID">
+          <stringProp name="dataSource">pg_accac</stringProp>
+          <stringProp name="queryType">Prepared Select Statement</stringProp>
+          <stringProp name="query">SELECT
+    a.&quot;ni_id&quot;,
+    m.&quot;cv_name&quot; AS model_name,
+    c.&quot;cv_name&quot; AS city_name,
+    s.&quot;cv_name&quot; AS status_name,
+    s.&quot;cv_color&quot;,
+    a.&quot;cv_note&quot;
+FROM sc_accac.&quot;tb_ANT&quot; a
+JOIN sc_accac.&quot;tb_MDL&quot; m
+    ON m.&quot;ni_id&quot; = a.&quot;ni_MDL_id&quot;
+JOIN sc_accac.&quot;tb_CITY&quot; c
+    ON c.&quot;ni_id&quot; = a.&quot;ni_CITY_id&quot;
+JOIN sc_accac.&quot;tb_STAT&quot; s
+    ON s.&quot;ni_id&quot; = a.&quot;ni_STAT_id&quot;
+WHERE a.&quot;ni_id&quot; = ?;</stringProp>
+          <stringProp name="queryArguments">${ANT_ID}</stringProp>
+          <stringProp name="queryArgumentsTypes">INTEGER</stringProp>
+          <stringProp name="variableNames"></stringProp>
+          <stringProp name="resultVariable"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+        </JDBCSampler>
+        <hashTree/>
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="false">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
