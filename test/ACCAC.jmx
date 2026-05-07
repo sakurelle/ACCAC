@@ -5,6 +5,8 @@
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
         <collectionProp name="Arguments.arguments"/>
       </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
     </TestPlan>
     <hashTree>
       <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
@@ -42,7 +44,7 @@
         </collectionProp>
       </Arguments>
       <hashTree/>
-      <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="JDBC ACCAC Connection">
+      <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="JDBC ACCAC Connection" enabled="true">
         <boolProp name="autocommit">true</boolProp>
         <stringProp name="checkQuery"></stringProp>
         <stringProp name="connectionAge">5000</stringProp>
@@ -61,7 +63,7 @@
         <stringProp name="username">jmeter_accac</stringProp>
       </JDBCDataSource>
       <hashTree/>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="01 Functional DB Check">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="01 Functional DB Check" enabled="true">
         <intProp name="ThreadGroup.num_threads">1</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -72,7 +74,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -109,7 +111,7 @@
           <stringProp name="filename"></stringProp>
         </ResultCollector>
         <hashTree/>
-        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="01 DB Connection OK">
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="01 DB Connection OK" enabled="true">
           <stringProp name="dataSource">pg_accac</stringProp>
           <stringProp name="query">SELECT &apos;OK&apos; AS result, current_database() AS db_name;</stringProp>
           <stringProp name="queryArguments"></stringProp>
@@ -123,7 +125,7 @@
           <stringProp name="TestPlan.comments">Проверка подключения</stringProp>
         </JDBCSampler>
         <hashTree/>
-        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="02 UI Components Exist">
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="02 UI Components Exist" enabled="true">
           <stringProp name="dataSource">pg_accac</stringProp>
           <stringProp name="queryType">Select Statement</stringProp>
           <stringProp name="query">SELECT
@@ -144,7 +146,7 @@ WHERE &quot;ni_LYT_id&quot; = 1;</stringProp>
           <stringProp name="TestPlan.comments">Проверсяем что из БД реально читаются компоненты интерфейса ACCAC</stringProp>
         </JDBCSampler>
         <hashTree>
-          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check UI Components OK">
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check UI Components OK" enabled="true">
             <collectionProp name="Asserion.test_strings">
               <stringProp name="2524">OK</stringProp>
             </collectionProp>
@@ -155,7 +157,7 @@ WHERE &quot;ni_LYT_id&quot; = 1;</stringProp>
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="03 UI Coordinates Valid">
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="03 UI Coordinates Valid" enabled="true">
           <stringProp name="dataSource">pg_accac</stringProp>
           <stringProp name="queryType">Select Statement</stringProp>
           <stringProp name="query">SELECT
@@ -180,7 +182,7 @@ WHERE
           <stringProp name="TestPlan.comments">Проверяем, что размеры и любыче числа валидны</stringProp>
         </JDBCSampler>
         <hashTree>
-          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check UI Coordinates OK">
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check UI Coordinates OK" enabled="true">
             <collectionProp name="Asserion.test_strings">
               <stringProp name="2524">OK</stringProp>
             </collectionProp>
@@ -191,7 +193,7 @@ WHERE
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="04 Antenna Relations Valid">
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="04 Antenna Relations Valid" enabled="true">
           <stringProp name="dataSource">pg_accac</stringProp>
           <stringProp name="queryType">Select Statement</stringProp>
           <stringProp name="query">SELECT
@@ -221,7 +223,7 @@ WHERE
           <stringProp name="TestPlan.comments">Проверка ссылочной целостности антенн</stringProp>
         </JDBCSampler>
         <hashTree>
-          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check Antenna Relations OK">
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Check Antenna Relations OK" enabled="true">
             <collectionProp name="Asserion.test_strings">
               <stringProp name="2524">OK</stringProp>
             </collectionProp>
@@ -232,7 +234,7 @@ WHERE
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="05 UI Layout Load">
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="05 UI Layout Load" enabled="true">
           <stringProp name="dataSource">pg_accac</stringProp>
           <stringProp name="queryType">Select Statement</stringProp>
           <stringProp name="query">SELECT
@@ -273,7 +275,7 @@ ORDER BY c.&quot;ni_id&quot;;</stringProp>
           <stringProp name="TestPlan.comments">Проверка загрузки макета интерфейса</stringProp>
         </JDBCSampler>
         <hashTree>
-          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="05 UI Layout Load">
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="05 UI Layout Load" enabled="true">
             <collectionProp name="Asserion.test_strings">
               <stringProp name="104810015">ni_id</stringProp>
             </collectionProp>
@@ -285,7 +287,7 @@ ORDER BY c.&quot;ni_id&quot;;</stringProp>
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="02 Load Test ACCAC DB">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="02 Load Test ACCAC DB" enabled="true">
         <stringProp name="TestPlan.comments">Нагрузочное тестирование</stringProp>
         <intProp name="ThreadGroup.num_threads">1000</intProp>
         <intProp name="ThreadGroup.ramp_time">600</intProp>
