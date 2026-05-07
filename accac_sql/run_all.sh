@@ -1,10 +1,16 @@
 #!/bin/bash
 set -e
 
-DB_NAME="db_ics_accac"
-DB_PORT="5433"
-DB_USER="postgres"
-PSQL="/usr/lib/postgresql/13/bin/psql"
+DB_NAME="${DB_NAME:-db_ics_accac}"
+DB_PORT="${DB_PORT:-5433}"
+DB_USER="${DB_USER:-postgres}"
+
+if [ -z "$PSQL" ]; then
+  echo "Ошибка: psql не найден"
+  exit 1
+fi
+
+PSQL="${PSQL:-$(command -v psql)}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQL_DIR="$SCRIPT_DIR"
 

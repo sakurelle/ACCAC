@@ -1,0 +1,50 @@
+{
+  "Load Antenna By ID" : {
+    "transaction" : "Load Antenna By ID",
+    "sampleCount" : 1,
+    "errorCount" : 1,
+    "errorPct" : 100.0,
+    "meanResTime" : 4206.0,
+    "medianResTime" : 4206.0,
+    "minResTime" : 4206.0,
+    "maxResTime" : 4206.0,
+    "pct1ResTime" : 4206.0,
+    "pct2ResTime" : 4206.0,
+    "pct3ResTime" : 4206.0,
+    "throughput" : 0.23775558725630053,
+    "receivedKBytesPerSec" : 0.008358594864479315,
+    "sentKBytesPerSec" : 0.0
+  },
+  "Total" : {
+    "transaction" : "Total",
+    "sampleCount" : 6,
+    "errorCount" : 6,
+    "errorPct" : 100.0,
+    "meanResTime" : 9660.333333333334,
+    "medianResTime" : 7571.5,
+    "minResTime" : 4206.0,
+    "maxResTime" : 20797.0,
+    "pct1ResTime" : 20797.0,
+    "pct2ResTime" : 20797.0,
+    "pct3ResTime" : 20797.0,
+    "throughput" : 0.22314787265694733,
+    "receivedKBytesPerSec" : 0.007845042398095805,
+    "sentKBytesPerSec" : 0.0
+  },
+  "Load UI Component By ID" : {
+    "transaction" : "Load UI Component By ID",
+    "sampleCount" : 5,
+    "errorCount" : 5,
+    "errorPct" : 100.0,
+    "meanResTime" : 10751.2,
+    "medianResTime" : 8983.0,
+    "minResTime" : 4628.0,
+    "maxResTime" : 20797.0,
+    "pct1ResTime" : 20797.0,
+    "pct2ResTime" : 20797.0,
+    "pct3ResTime" : 20797.0,
+    "throughput" : 0.1859565605474561,
+    "receivedKBytesPerSec" : 0.006537535331746503,
+    "sentKBytesPerSec" : 0.0
+  }
+}

@@ -29,12 +29,14 @@ sudo apt update
 
 echo
 echo "=== 2. Установка PostgreSQL 13 ==="
-if ! dpkg -s postgresql-13 >/dev/null 2>&1; then
-  echo "PostgreSQL 13 не найден. Устанавливаю..."
-  sudo apt install -y postgresql-13 postgresql-client-13
+if command -v psql >/dev/null 2>&1; then
+  echo "PostgreSQL уже установлен. Использую существующую версию."
 else
-  echo "PostgreSQL 13 уже установлен."
+  echo "PostgreSQL не найден. Устанавливаю PostgreSQL 13..."
+  sudo apt install -y postgresql-13 postgresql-client-13
 fi
+
+PSQL="$(command -v psql)"
 
 echo
 echo "=== 3. Проверка запуска PostgreSQL ==="
@@ -43,7 +45,7 @@ sudo systemctl start postgresql
 
 echo
 echo "=== 4. Настройка пароля пользователя postgres ==="
-sudo -u postgres /usr/lib/postgresql/13/bin/psql -p "$DB_PORT" -d postgres -c "ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD';" || true
+sudo -u postgres "$PSQL" -p "$DB_PORT" -d postgres -c "ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD';" || true
 
 echo
 echo "=== 5. Подготовка SQL-скрипта ==="
@@ -52,7 +54,7 @@ chmod +x "$SQL_DIR/run_all.sh"
 echo
 echo "=== 6. Развертывание базы данных ==="
 cd "$SQL_DIR"
-./run_all.sh
+DB_PORT="$DB_PORT" PSQL="$PSQL" ./run_all.sh
 
 echo
 echo "=== 7. Проверка файла accac.ini ==="
