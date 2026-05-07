@@ -73,6 +73,12 @@ EOF
 echo "Файл accac.ini обновлен: $INI_FILE"
 
 echo
+echo "=== 8. Сборка и запуск Lazarus-приложения ==="
+
+chmod +x "$APP_DIR/run_lazarus.sh"
+"$APP_DIR/run_lazarus.sh"
+
+echo
 echo "=== Установка завершена ==="
 echo "База данных создана и заполнена."
 echo
