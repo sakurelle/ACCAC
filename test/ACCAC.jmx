@@ -299,7 +299,7 @@ ORDER BY c.&quot;ni_id&quot;;</stringProp>
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CMP IDs">
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CMP IDs" enabled="true">
           <stringProp name="delimiter">,</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="filename">/home/sakurelle/ACCAC/test/cmp_ids.csv</stringProp>
@@ -311,7 +311,7 @@ ORDER BY c.&quot;ni_id&quot;;</stringProp>
           <stringProp name="variableNames">CMP_ID</stringProp>
         </CSVDataSet>
         <hashTree/>
-        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="ANT IDs">
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="ANT IDs" enabled="true">
           <stringProp name="filename">/home/sakurelle/ACCAC/test/ant_ids.csv</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="variableNames">ANT_ID</stringProp>
@@ -323,7 +323,7 @@ ORDER BY c.&quot;ni_id&quot;;</stringProp>
           <stringProp name="shareMode">shareMode.all</stringProp>
         </CSVDataSet>
         <hashTree/>
-        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Load UI Component By ID">
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Load UI Component By ID" enabled="true">
           <stringProp name="dataSource">pg_accac</stringProp>
           <stringProp name="queryType">Prepared Select Statement</stringProp>
           <stringProp name="query">SELECT
@@ -346,7 +346,7 @@ WHERE c.&quot;ni_id&quot; = ?;</stringProp>
           <stringProp name="resultSetHandler">Store as String</stringProp>
         </JDBCSampler>
         <hashTree/>
-        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Load Antenna By ID">
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Load Antenna By ID" enabled="true">
           <stringProp name="dataSource">pg_accac</stringProp>
           <stringProp name="queryType">Prepared Select Statement</stringProp>
           <stringProp name="query">SELECT

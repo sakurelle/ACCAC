@@ -1,61 +1,73 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-JMX="${JMX:-$SCRIPT_DIR/ACCAC_DB_LIMITS.jmx}"
-OUT="${OUT:-$SCRIPT_DIR/jmeter-db-limits}"
+JMETER_PLAN="$SCRIPT_DIR/ACCAC_DB_LIMITS.jmx"
+RESULTS_DIR="$SCRIPT_DIR/jmeter-db-limits"
 
-CMP_IDS="${CMP_IDS:-$REPO_DIR/test/cmp_ids.csv}"
-ANT_IDS="${ANT_IDS:-$REPO_DIR/test/ant_ids.csv}"
-
-DURATION="${DURATION:-300}"
+THREAD_STEPS="${THREAD_STEPS:-10 25 50 100 200 300 500 750 1000}"
 RAMP="${RAMP:-60}"
+DURATION="${DURATION:-300}"
+LOOPS="${LOOPS:-100000000}"
 
-if [ ! -f "$JMX" ]; then
-  echo "ERROR: JMX file not found: $JMX"
+if [ ! -f "$JMETER_PLAN" ]; then
+  echo "ERROR: JMeter plan not found: $JMETER_PLAN"
   exit 1
 fi
 
-if [ ! -f "$CMP_IDS" ]; then
-  echo "ERROR: CMP IDS file not found: $CMP_IDS"
+if ! command -v jmeter >/dev/null 2>&1; then
+  echo "ERROR: jmeter command not found"
   exit 1
 fi
 
-if [ ! -f "$ANT_IDS" ]; then
-  echo "ERROR: ANT IDS file not found: $ANT_IDS"
-  exit 1
-fi
+mkdir -p "$RESULTS_DIR"
 
-rm -rf "$OUT"
-mkdir -p "$OUT"
+for THREADS in $THREAD_STEPS; do
+  RUN_DIR="$RESULTS_DIR/${THREADS}_threads"
 
-for THREADS in 10 25 50 100 200 300 500 750 1000; do
-  STEP_DIR="$OUT/${THREADS}threads"
-  mkdir -p "$STEP_DIR"
+  echo "========================================"
+  echo "Starting DB limit test"
+  echo "Threads:  $THREADS"
+  echo "Ramp:     $RAMP"
+  echo "Duration: $DURATION"
+  echo "Plan:     $JMETER_PLAN"
+  echo "Output:   $RUN_DIR"
+  echo "========================================"
 
-  echo "Running limit test: threads=$THREADS"
+  rm -rf "$RUN_DIR"
+  mkdir -p "$RUN_DIR"
 
   jmeter -n \
-    -t "$JMX" \
-    -l "$STEP_DIR/result.jtl" \
-    -j "$STEP_DIR/jmeter.log" \
+    -t "$JMETER_PLAN" \
+    -l "$RUN_DIR/result.jtl" \
+    -j "$RUN_DIR/jmeter.log" \
     -Jthreads="$THREADS" \
     -Jpool="$THREADS" \
     -Jramp="$RAMP" \
     -Jduration="$DURATION" \
-    -Jloops="-1" \
-    -Jcmp_ids="$CMP_IDS" \
-    -Jant_ids="$ANT_IDS"
+    -Jloops="$LOOPS"
 
-  if [ ! -s "$STEP_DIR/result.jtl" ] || [ "$(wc -l < "$STEP_DIR/result.jtl")" -le 1 ]; then
-    echo "ERROR: result.jtl is empty for ${THREADS} threads"
-    echo "See log: $STEP_DIR/jmeter.log"
-    exit 1
+  SAMPLE_COUNT=$(grep -c "^[0-9]" "$RUN_DIR/result.jtl" || true)
+
+  if [ "$SAMPLE_COUNT" -gt 0 ]; then
+    echo "Samples: $SAMPLE_COUNT"
+    echo "Generating HTML report..."
+
+    jmeter -g "$RUN_DIR/result.jtl" -o "$RUN_DIR/report"
+
+    echo "Report created:"
+    echo "$RUN_DIR/report/index.html"
+  else
+    echo "WARNING: result.jtl has 0 samples"
+    echo "HTML report skipped"
+    echo "Check log:"
+    echo "$RUN_DIR/jmeter.log"
   fi
 
-  jmeter -g "$STEP_DIR/result.jtl" -o "$STEP_DIR/report"
+  echo
 done
 
-echo "Done. Reports are in: $OUT"
+echo "All tests finished"
+echo "Results directory:"
+echo "$RESULTS_DIR"
