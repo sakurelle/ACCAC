@@ -1,162 +1,181 @@
 # ACCAC
 
-## Описание проекта
+## Назначение проекта
 
-ACCAC — приложение для отображения состава и состояния антенных комплексов НИЦ «Планета».
+ACCAC - настольное приложение для отображения состава и состояния антенных комплексов. Система хранит предметные данные и параметры интерфейсного макета в PostgreSQL, а клиент на Lazarus визуализирует макет, антенны, связанные города, центры и статусы.
 
-Проект использует базу данных PostgreSQL:
+## Используемые технологии
 
-- БД: `db_ics_accac`
-- схема: `sc_accac`
+- Lazarus / Free Pascal
+- PostgreSQL
+- Bash-скрипты для сборки и разворачивания БД
+- Apache JMeter для функционального и нагрузочного тестирования
+- PowerShell для генерации итогового DOCX-отчета
 
-Основная задача приложения — хранить и отображать информацию о центрах, городах, антенных установках, моделях антенн, их состояниях и компонентах пользовательского интерфейса.
+## Структура репозитория
 
-Основные сущности БД:
-
-- `tb_CTR` — центры;
-- `tb_CITY` — города;
-- `tb_MDL` — модели антенн;
-- `tb_ANT` — антенные установки;
-- `tb_STAT` — состояния антенн;
-- `tb_LYT` — макеты интерфейса;
-- `tb_CMP` — компоненты интерфейса, их координаты, размеры, текст и связи с объектами БД.
-
-Данные интерфейса хранятся в таблице `tb_CMP`, поэтому внешний вид приложения может формироваться на основе данных из БД.
-
-## Установка и запуск
-
-### 1. Открыть терминал
-
-Перейдите в папку `ACCAC_delivery` любым удобным способом.
-
-Например:
-
-```bash
-cd /путь/к/ACCAC
+```text
+ACCAC/
+├── install_accac.sh
+├── src/
+│   ├── forms/
+│   ├── domain/
+│   ├── infrastructure/
+│   └── config/
+├── db/postgresql/
+│   ├── migrations/
+│   ├── fixtures/hex/
+│   └── run_all.sh
+├── tests/jmeter/
+│   ├── plans/
+│   ├── data/
+│   └── run_accac_db_limits.sh
+├── docs/
+│   ├── architecture/
+│   ├── testing/
+│   └── build_testing_report.ps1
+└── scripts/
+    ├── build.sh
+    ├── run.sh
+    └── clean.sh
 ```
 
-Если путь неизвестен, можно открыть терминал прямо в папке `ACCAC` и выполнять команды оттуда.
+## Требования
 
-### 2. Запустить установку
+- Linux с Bash
+- PostgreSQL и утилита `psql`
+- Lazarus / Free Pascal (`lazbuild`, `fpc`)
+- `libpq` и `libgtk2.0-dev` для сборки клиента
+- Apache JMeter 5.6.x для запуска тестов
+
+## Установка
+
+Главный установочный сценарий расположен в корне репозитория:
 
 ```bash
 chmod +x install_accac.sh
 ./install_accac.sh
 ```
 
-### 3. Запустить программу
+Скрипт:
 
-```bash
-cd accac_lazarus
-chmod +x project1
-./project1
+- устанавливает необходимые пакеты;
+- подготавливает роль и базу PostgreSQL;
+- применяет миграции из `db/postgresql/migrations/`;
+- создает локальный конфиг `src/config/accac.ini`;
+- собирает приложение через `scripts/build.sh`.
+
+## Настройка конфигурации
+
+В репозитории хранится только шаблон:
+
+```text
+src/config/accac.example.ini
 ```
 
-Либо два раза нажать на `project1`.
-
-## Повторный запуск программы
-
-Если база данных уже установлена, для повторного запуска достаточно запустить `project1`:
+Для локального запуска создайте рабочий конфиг:
 
 ```bash
-cd /путь_к_accac_lazarus
-./project1
+cp src/config/accac.example.ini src/config/accac.ini
 ```
 
-## Если нужно заново развернуть БД
+При необходимости измените параметры подключения:
+
+```ini
+[database]
+host=localhost
+port=5432
+database=accac
+user=accac_user
+password=change_me
+schema=sc_accac
+```
+
+## Развертывание БД
+
+Полный прогон миграций:
 
 ```bash
-cd /путь_к_accac_sql
-chmod +x run_all.sh
-./run_all.sh
+chmod +x db/postgresql/run_all.sh
+DB_NAME=accac DB_USER=accac_user DB_PORT=5432 ./db/postgresql/run_all.sh
 ```
+
+Скрипт выполняет файлы в фиксированном порядке:
+
+1. `db/postgresql/migrations/001_schema.sql`
+2. `db/postgresql/migrations/002_tables.sql`
+3. `db/postgresql/migrations/003_indexes.sql`
+4. `db/postgresql/migrations/004_functions.sql`
+5. `db/postgresql/migrations/005_procedures.sql`
+6. `db/postgresql/migrations/006_triggers.sql`
+7. `db/postgresql/migrations/007_seed.sql`
+
+Для `007_seed.sql` автоматически используется каталог `db/postgresql/fixtures/hex/`.
+
+## Сборка
+
+```bash
+chmod +x scripts/build.sh
+./scripts/build.sh
+```
+
+Сборка использует Lazarus-проект:
+
+```text
+src/project1.lpi
+```
+
+Исполняемый файл создается в:
+
+```text
+build/project1
+```
+
+## Запуск
+
+```bash
+chmod +x scripts/run.sh
+./scripts/run.sh
+```
+
+Приложение читает локальный конфиг `src/config/accac.ini`. Если файл лежит рядом с бинарником, он тоже будет найден.
 
 ## Тестирование
 
-Тестирование базы данных выполнялось с помощью Apache JMeter 5.6.3 через JDBC-подключение к PostgreSQL.
+Функциональный и нагрузочный планы JMeter:
 
-Использовался тестовый план:
+- `tests/jmeter/plans/ACCAC.jmx`
+- `tests/jmeter/plans/ACCAC_DB_LIMITS.jmx`
 
-```text
-test/ACCAC.jmx
-```
+CSV-данные для параметризации:
 
-### Проверенные сценарии
+- `tests/jmeter/data/cmp_ids.csv`
+- `tests/jmeter/data/ant_ids.csv`
 
-#### 1. Проверка подключения к БД
-
-  Проверяется возможность подключения к базе данных `db_ics_accac` через JDBC, так как приложение должно иметь доступ к данным только при наличии корректных параметров подключения.
-
-#### 2. Проверка наличия компонентов интерфейса
-
-Проверяется, что в таблице `sc_accac."tb_CMP"` существуют компоненты интерфейса для основного макета.
-
-
-#### 3. Проверка координат и размеров UI-компонентов
-
-Проверяется отсутствие некорректных значений:
-
-- отрицательных координат `ni_x`, `ni_y`;
-- нулевой или отрицательной ширины `ni_width`;
-- нулевой или отрицательной высоты `ni_height`.
-
-
-#### 4. Проверка связей антенн
-
-Проверяются связи таблицы `tb_ANT` с таблицами:
-
-- `tb_MDL`;
-- `tb_CITY`;
-- `tb_STAT`.
-
-#### 5. Проверка загрузки макета интерфейса
-
-Выполняется запрос, который загружает компоненты интерфейса вместе со связанными центрами, городами, антеннами, моделями и статусами.
-
-#### 6. Нагрузочное тестирование
-
-Выполняются два основных JDBC-запроса:
-
-1. загрузка UI-компонента по ID из `tb_CMP`;
-2. загрузка антенны по ID с присоединением `tb_ANT`, `tb_MDL`, `tb_CITY`, `tb_STAT`.
-
-Для передачи ID использовались CSV-файлы:
-
-```text
-cmp_ids.csv
-ant_ids.csv
-```
-
-## Запуск JMeter-теста
-
-Пример запуска теста в CLI-режиме:
+Пример запуска основного плана:
 
 ```bash
-rm -rf */ACCAC/test/jmeter-results
-mkdir -p */ACCAC/test/jmeter-results
+mkdir -p tests/jmeter/jmeter-results/accac
 
 jmeter \
   -n \
-  -t */ACCAC/test/ACCAC.jmx \
-  -l */ACCAC/test/jmeter-results/result.jtl \
-  -j */ACCAC/test/jmeter-results/jmeter.log \
+  -t tests/jmeter/plans/ACCAC.jmx \
+  -l tests/jmeter/jmeter-results/accac/result.jtl \
+  -j tests/jmeter/jmeter-results/accac/jmeter.log \
   -e \
-  -o */ACCAC/test/jmeter-results/report
+  -o tests/jmeter/jmeter-results/accac/report
 ```
 
-Открытие HTML-отчёта:
+Пример поиска лимита по потокам:
 
 ```bash
-xdg-open */ACCAC/test/jmeter-results/report/index.html
+chmod +x tests/jmeter/run_accac_db_limits.sh
+./tests/jmeter/run_accac_db_limits.sh
 ```
 
-## Критерии успешного тестирования
+## Документация
 
-Тестирование считается успешным, если:
-
-- подключение к БД выполняется без ошибок;
-- функциональные JDBC-запросы завершаются успешно;
-- компоненты интерфейса загружаются из БД;
-- координаты и размеры UI-компонентов корректны;
-- связи между основными таблицами БД не нарушены;
-- при нагрузочном тестировании `Error % = 0.00%`, либо близко к нему
+- Архитектурное описание: `docs/architecture/architecture.md`
+- Исходный markdown-отчет по тестированию: `docs/testing/testing_report.md`
+- Генератор DOCX-отчета: `docs/build_testing_report.ps1`
+- Дополнительный архитектурный документ: `docs/architecture/Архитектура_ACCAC.docx`

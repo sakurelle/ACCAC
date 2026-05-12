@@ -1,2 +1,35 @@
+# Lazarus / Free Pascal
+*.o
+*.ppu
+*.compiled
+*.or
+*.rst
+*.lps
+lib/
+backup/
+
+# Build artifacts
+project1
+build/
+*.tar.gz
+*.zip
+
+# Local config
+accac.ini
+*.local.ini
+.env
+
+# JMeter results
 *.jtl
 *.log
+tests/**/report/
+tests/**/jmeter-results/
+
+# Generated reports
+docs/testing/*.docx
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

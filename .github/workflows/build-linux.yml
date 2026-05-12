@@ -1,0 +1,38 @@
+name: Build Linux project1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Lazarus and PostgreSQL client libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            lazarus \
+            fpc \
+            fpc-source \
+            fp-units-db \
+            libpq5 \
+            libpq-dev \
+            libgtk2.0-dev
+
+      - name: Build project
+        run: |
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: accac-linux-binary
+          path: build/project1

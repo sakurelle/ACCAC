@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="12"/>
+    <General>
+      <SessionStorage Value="InProjectDir"/>
+      <MainUnit Value="0"/>
+      <Title Value="project1"/>
+      <Scaled Value="True"/>
+      <ResourceType Value="res"/>
+      <UseXPManifest Value="True"/>
+      <XPManifest>
+        <DpiAware Value="True"/>
+      </XPManifest>
+      <Icon Value="0"/>
+    </General>
+    <BuildModes>
+      <Item Name="Default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <UseFileFilters Value="True"/>
+    </PublishOptions>
+    <RunParams>
+      <FormatVersion Value="2"/>
+    </RunParams>
+    <RequiredPackages>
+      <Item>
+        <PackageName Value="FCL"/>
+      </Item>
+      <Item>
+        <PackageName Value="LCL"/>
+      </Item>
+    </RequiredPackages>
+    <Units>
+      <Unit>
+        <Filename Value="project1.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="forms/main/unit1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormMain"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="Unit1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="forms/editor/uniteditor.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormEditor"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitEditor"/>
+      </Unit>
+      <Unit>
+        <Filename Value="forms/menu/unitmenu.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormMenu"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitMenu"/>
+      </Unit>
+      <Unit>
+        <Filename Value="infrastructure/unitdb.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitDb"/>
+      </Unit>
+      <Unit>
+        <Filename Value="domain/unitctr.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitCtr"/>
+      </Unit>
+      <Unit>
+        <Filename Value="domain/unitstat.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitStat"/>
+      </Unit>
+      <Unit>
+        <Filename Value="domain/unitlyt.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitLyt"/>
+      </Unit>
+      <Unit>
+        <Filename Value="domain/unitmdl.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitMdl"/>
+      </Unit>
+      <Unit>
+        <Filename Value="domain/unitcity.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitCity"/>
+      </Unit>
+      <Unit>
+        <Filename Value="domain/unitant.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitAnt"/>
+      </Unit>
+      <Unit>
+        <Filename Value="domain/unitcmp.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitCmp"/>
+      </Unit>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <Target>
+      <Filename Value="../build/project1"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="forms/main;forms/editor;forms/menu;domain;infrastructure"/>
+      <UnitOutputDirectory Value="../build/lib/$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <Linking>
+      <Debugging>
+        <DebugInfoType Value="dsDwarf2"/>
+      </Debugging>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions>
+      <Item>
+        <Name Value="EAbort"/>
+      </Item>
+      <Item>
+        <Name Value="ECodetoolError"/>
+      </Item>
+      <Item>
+        <Name Value="EFOpenError"/>
+      </Item>
+    </Exceptions>
+  </Debugging>
+</CONFIG>
