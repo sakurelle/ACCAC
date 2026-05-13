@@ -29,6 +29,10 @@ if [ ! -f "$BUILD_SCRIPT" ]; then
   exit 1
 fi
 
+chmod +x "$ROOT_DIR"/scripts/*.sh 2>/dev/null || true
+chmod +x "$DB_DIR/run_all.sh" 2>/dev/null || true
+chmod +x "$ROOT_DIR/tests/jmeter/run_accac_db_limits.sh" 2>/dev/null || true
+
 echo
 echo "=== Installing system packages ==="
 sudo apt-get update

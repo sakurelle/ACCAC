@@ -28,7 +28,6 @@ jobs:
 
       - name: Build project
         run: |
-          chmod +x scripts/build.sh
           ./scripts/build.sh
 
       - name: Upload binary artifact

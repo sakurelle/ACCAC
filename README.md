@@ -65,6 +65,14 @@ chmod +x install_accac.sh
 - создает локальный конфиг `src/config/accac.ini`;
 - собирает приложение через `scripts/build.sh`.
 
+### Подготовка shell-скриптов
+
+В Linux shell-скрипты должны иметь право на выполнение. Обычно оно уже хранится в репозитории, но если при запуске появляется ошибка `Отказано в доступе`, выполните:
+
+```bash
+chmod +x install_accac.sh scripts/*.sh db/postgresql/run_all.sh tests/jmeter/run_accac_db_limits.sh
+```
+
 ## Настройка конфигурации
 
 В репозитории хранится только шаблон:
@@ -133,8 +141,17 @@ build/project1
 
 ## Запуск
 
+Основной вариант, если права на выполнение уже сохранены в Git:
+
 ```bash
-chmod +x scripts/run.sh
+./scripts/build.sh
+./scripts/run.sh
+```
+
+Резервный вариант, если система сняла executable bit:
+
+```bash
+chmod +x install_accac.sh scripts/*.sh db/postgresql/run_all.sh tests/jmeter/run_accac_db_limits.sh
 ./scripts/run.sh
 ```
 
