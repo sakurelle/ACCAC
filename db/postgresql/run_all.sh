@@ -14,7 +14,9 @@ POSTGRES_USER="${POSTGRES_USER:-${PGSYSTEM_USER:-postgres}}"
 APP_DB_PASSWORD="${APP_DB_PASSWORD:-${DB_PASSWORD:-}}"
 PSQL="${PSQL:-$(command -v psql || true)}"
 SUDO_BIN="${SUDO_BIN:-$(command -v sudo || true)}"
-USE_SUDO_AS_POSTGRES=0
+RUNUSER_BIN="${RUNUSER_BIN:-$(command -v runuser || true)}"
+USE_LOCAL_POSTGRES_OS_USER=0
+MIN_SERVER_VERSION_NUM=110000
 
 MIGRATIONS=(
   "001_schema.sql"
@@ -27,9 +29,69 @@ MIGRATIONS=(
   "008_grants.sql"
 )
 
+fail() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+run_as_local_postgres() {
+  if [ "$(id -un)" = "$POSTGRES_USER" ]; then
+    "$PSQL" "$@"
+    return 0
+  fi
+
+  if [ -n "$SUDO_BIN" ]; then
+    "$SUDO_BIN" -u "$POSTGRES_USER" "$PSQL" "$@"
+    return 0
+  fi
+
+  if [ -n "$RUNUSER_BIN" ] && [ "$(id -u)" -eq 0 ]; then
+    "$RUNUSER_BIN" -u "$POSTGRES_USER" -- "$PSQL" "$@"
+    return 0
+  fi
+
+  fail "Unable to switch to the local PostgreSQL OS user $POSTGRES_USER. Re-run as root, install sudo, or connect with direct PostgreSQL authentication."
+}
+
+manual_create_user_command() {
+  if [ -n "$SUDO_BIN" ]; then
+    printf 'sudo -u %s psql -c "CREATE USER %s WITH PASSWORD '\''change_me'\'';"\n' \
+      "$POSTGRES_USER" "$APP_DB_USER"
+    return 0
+  fi
+
+  if [ -n "$RUNUSER_BIN" ] && [ "$(id -u)" -eq 0 ]; then
+    printf 'runuser -u %s -- psql -c "CREATE USER %s WITH PASSWORD '\''change_me'\'';"\n' \
+      "$POSTGRES_USER" "$APP_DB_USER"
+    return 0
+  fi
+
+  printf 'psql -h %s -p %s -U %s -d postgres -c "CREATE USER %s WITH PASSWORD '\''change_me'\'';"\n' \
+    "$APP_DB_HOST" "$APP_DB_PORT" "$POSTGRES_USER" "$APP_DB_USER"
+}
+
+manual_server_version_check_command() {
+  if [ "$USE_LOCAL_POSTGRES_OS_USER" -eq 1 ]; then
+    if [ -n "$SUDO_BIN" ]; then
+      printf 'sudo -u %s psql -d postgres -tAc "SHOW server_version_num;"\n' \
+        "$POSTGRES_USER"
+      return 0
+    fi
+
+    if [ -n "$RUNUSER_BIN" ] && [ "$(id -u)" -eq 0 ]; then
+      printf 'runuser -u %s -- psql -d postgres -tAc "SHOW server_version_num;"\n' \
+        "$POSTGRES_USER"
+      return 0
+    fi
+  fi
+
+  printf 'psql -h %s -p %s -U %s -d postgres -tAc "SHOW server_version_num;"\n' \
+    "$APP_DB_HOST" "$APP_DB_PORT" "$POSTGRES_USER"
+}
+
 run_admin_psql() {
-  if [ "$USE_SUDO_AS_POSTGRES" -eq 1 ]; then
-    "$SUDO_BIN" -u "$POSTGRES_USER" "$PSQL" \
+  if [ "$USE_LOCAL_POSTGRES_OS_USER" -eq 1 ]; then
+    run_as_local_postgres \
       -v ON_ERROR_STOP=1 \
       -p "$APP_DB_PORT" \
       "$@"
@@ -63,6 +125,26 @@ SELECT 1
 FROM pg_database
 WHERE datname = :'APP_DB_NAME';
 SQL
+}
+
+query_server_version_num() {
+  run_admin_psql -d postgres -tAc "SHOW server_version_num;" 2>/dev/null | tr -d '[:space:]'
+}
+
+require_supported_server_version() {
+  local server_version_num
+
+  server_version_num="$(query_server_version_num || true)"
+
+  if ! [[ "$server_version_num" =~ ^[0-9]+$ ]]; then
+    fail "Unable to determine the PostgreSQL server version. Check manually with: $(manual_server_version_check_command)"
+  fi
+
+  if [ "$server_version_num" -lt "$MIN_SERVER_VERSION_NUM" ]; then
+    fail "ACCAC requires PostgreSQL 11 or newer. Detected server_version_num=$server_version_num."
+  fi
+
+  echo "PostgreSQL server version is compatible: $((server_version_num / 10000)) (server_version_num=$server_version_num)"
 }
 
 create_role_if_missing() {
@@ -104,30 +186,29 @@ SQL
 }
 
 if [ -z "$PSQL" ]; then
-  echo "ERROR: psql command not found"
-  exit 1
+  fail "psql command not found"
 fi
 
 if [ ! -d "$REPO_ROOT" ]; then
-  echo "ERROR: repository root not found: $REPO_ROOT"
-  exit 1
+  fail "repository root not found: $REPO_ROOT"
 fi
 
 if [ ! -d "$MIGRATIONS_DIR" ]; then
-  echo "ERROR: migrations directory not found: $MIGRATIONS_DIR"
-  exit 1
+  fail "migrations directory not found: $MIGRATIONS_DIR"
 fi
 
-if [ -n "$SUDO_BIN" ] && [ "$POSTGRES_USER" = "postgres" ] && \
+if [ "$POSTGRES_USER" = "postgres" ] && \
   [ "$(id -un)" != "$POSTGRES_USER" ] && \
-  { [ "$APP_DB_HOST" = "localhost" ] || [ "$APP_DB_HOST" = "127.0.0.1" ] || [ "$APP_DB_HOST" = "::1" ]; }; then
-  USE_SUDO_AS_POSTGRES=1
+  { [ "$APP_DB_HOST" = "localhost" ] || [ -z "$APP_DB_HOST" ]; }; then
+  USE_LOCAL_POSTGRES_OS_USER=1
 fi
 
 echo "Preparing ACCAC database deployment..."
 echo "Repository root: $REPO_ROOT"
 echo "Target database: $APP_DB_NAME"
 echo "Application role: $APP_DB_USER"
+
+require_supported_server_version
 
 ROLE_EXISTS="$(query_role_exists | tr -d '[:space:]')"
 
@@ -138,7 +219,7 @@ if [ "$ROLE_EXISTS" != "1" ]; then
   else
     echo "Database role $APP_DB_USER was not found."
     echo "Create it before deploying the database:"
-    echo "sudo -u postgres psql -c \"CREATE USER $APP_DB_USER WITH PASSWORD 'change_me';\""
+    manual_create_user_command
     echo
     echo "Or rerun the script with APP_DB_PASSWORD to create the role automatically."
     exit 1
@@ -158,8 +239,7 @@ for migration in "${MIGRATIONS[@]}"; do
   migration_path="$MIGRATIONS_DIR/$migration"
 
   if [ ! -f "$migration_path" ]; then
-    echo "ERROR: migration not found: $migration_path"
-    exit 1
+    fail "migration not found: $migration_path"
   fi
 
   echo "Applying $migration..."
