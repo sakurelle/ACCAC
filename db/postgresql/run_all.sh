@@ -70,21 +70,17 @@ create_role_if_missing() {
     -d postgres \
     -v APP_DB_USER="$APP_DB_USER" \
     -v APP_DB_PASSWORD="$APP_DB_PASSWORD" <<'SQL'
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_roles
-    WHERE rolname = :'APP_DB_USER'
-  ) THEN
-    EXECUTE format(
-      'CREATE USER %I WITH PASSWORD %L',
-      :'APP_DB_USER',
-      :'APP_DB_PASSWORD'
-    );
-  END IF;
-END
-$$;
+SELECT format(
+  'CREATE USER %I WITH PASSWORD %L',
+  :'APP_DB_USER',
+  :'APP_DB_PASSWORD'
+)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM pg_roles
+  WHERE rolname = :'APP_DB_USER'
+)
+\gexec
 SQL
 }
 

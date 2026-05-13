@@ -1,3 +1,17 @@
+\if :{?APP_DB_NAME}
+\else
+\echo APP_DB_NAME is not set
+\quit 1
+\endif
+
+\if :{?APP_DB_USER}
+\else
+\echo APP_DB_USER is not set
+\quit 1
+\endif
+
+\echo Applying grants for database :APP_DB_NAME and user :APP_DB_USER
+
 GRANT CONNECT ON DATABASE :"APP_DB_NAME" TO :"APP_DB_USER";
 
 GRANT USAGE ON SCHEMA sc_accac TO :"APP_DB_USER";
@@ -14,19 +28,12 @@ GRANT EXECUTE
 ON ALL FUNCTIONS IN SCHEMA sc_accac
 TO :"APP_DB_USER";
 
-DO $grant$
-BEGIN
-  BEGIN
-    EXECUTE format(
-      'GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA sc_accac TO %I',
-      :'APP_DB_USER'
-    );
-  EXCEPTION
-    WHEN syntax_error_or_access_rule_violation THEN
-      RAISE NOTICE 'Skipping separate procedure grants for this PostgreSQL version.';
-  END;
-END
-$grant$;
+SELECT format(
+  'GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA sc_accac TO %I',
+  :'APP_DB_USER'
+)
+WHERE current_setting('server_version_num')::int >= 110000
+\gexec
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA sc_accac
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :"APP_DB_USER";
@@ -36,17 +43,3 @@ GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO :"APP_DB_USER";
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA sc_accac
 GRANT EXECUTE ON FUNCTIONS TO :"APP_DB_USER";
-
-DO $grant$
-BEGIN
-  BEGIN
-    EXECUTE format(
-      'ALTER DEFAULT PRIVILEGES IN SCHEMA sc_accac GRANT EXECUTE ON ROUTINES TO %I',
-      :'APP_DB_USER'
-    );
-  EXCEPTION
-    WHEN syntax_error_or_access_rule_violation THEN
-      RAISE NOTICE 'Skipping separate default routine grants for this PostgreSQL version.';
-  END;
-END
-$grant$;

@@ -134,6 +134,8 @@ APP_DB_NAME=accac APP_DB_USER=accac_user POSTGRES_USER=postgres ./db/postgresql/
 - применяет миграции;
 - применяет `008_grants.sql` для выдачи прав пользователю приложения.
 
+`008_grants.sql` нужно запускать через `db/postgresql/run_all.sh`: этот скрипт передаёт `APP_DB_NAME` и `APP_DB_USER` через `psql -v`. Не запускайте `008_grants.sql` вручную без этих параметров.
+
 Порядок миграций:
 
 1. `db/postgresql/migrations/001_schema.sql`
