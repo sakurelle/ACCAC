@@ -1,0 +1,52 @@
+GRANT CONNECT ON DATABASE :"APP_DB_NAME" TO :"APP_DB_USER";
+
+GRANT USAGE ON SCHEMA sc_accac TO :"APP_DB_USER";
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA sc_accac
+TO :"APP_DB_USER";
+
+GRANT USAGE, SELECT, UPDATE
+ON ALL SEQUENCES IN SCHEMA sc_accac
+TO :"APP_DB_USER";
+
+GRANT EXECUTE
+ON ALL FUNCTIONS IN SCHEMA sc_accac
+TO :"APP_DB_USER";
+
+DO $grant$
+BEGIN
+  BEGIN
+    EXECUTE format(
+      'GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA sc_accac TO %I',
+      :'APP_DB_USER'
+    );
+  EXCEPTION
+    WHEN syntax_error_or_access_rule_violation THEN
+      RAISE NOTICE 'Skipping separate procedure grants for this PostgreSQL version.';
+  END;
+END
+$grant$;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA sc_accac
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :"APP_DB_USER";
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA sc_accac
+GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO :"APP_DB_USER";
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA sc_accac
+GRANT EXECUTE ON FUNCTIONS TO :"APP_DB_USER";
+
+DO $grant$
+BEGIN
+  BEGIN
+    EXECUTE format(
+      'ALTER DEFAULT PRIVILEGES IN SCHEMA sc_accac GRANT EXECUTE ON ROUTINES TO %I',
+      :'APP_DB_USER'
+    );
+  EXCEPTION
+    WHEN syntax_error_or_access_rule_violation THEN
+      RAISE NOTICE 'Skipping separate default routine grants for this PostgreSQL version.';
+  END;
+END
+$grant$;

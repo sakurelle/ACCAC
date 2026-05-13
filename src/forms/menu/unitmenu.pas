@@ -20,7 +20,7 @@ type
     procedure btnAddCenterCityAntennaClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-
+    procedure OpenEditorPage(APageIndex: Integer);
   public
 
   end;
@@ -35,6 +35,24 @@ uses
 
 {$R *.lfm}
 
+procedure TFormMenu.OpenEditorPage(APageIndex: Integer);
+begin
+  if Assigned(FormEditor) and not FormEditor.IsReady then
+    FreeAndNil(FormEditor);
+
+  if not Assigned(FormEditor) then
+    Application.CreateForm(TFormEditor, FormEditor);
+
+  if not Assigned(FormEditor) or not FormEditor.IsReady then
+    Exit;
+
+  if (APageIndex >= 0) and (APageIndex < FormEditor.PageControl1.PageCount) then
+    FormEditor.PageControl1.ActivePageIndex := APageIndex;
+
+  FormEditor.Show;
+  FormEditor.BringToFront;
+end;
+
 procedure TFormMenu.FormCreate(Sender: TObject);
 begin
   FormStyle := fsStayOnTop;
@@ -43,32 +61,17 @@ end;
 
 procedure TFormMenu.btnStatesClick(Sender: TObject);
 begin
-  if not Assigned(FormEditor) then
-    Application.CreateForm(TFormEditor, FormEditor);
-
-  FormEditor.PageControl1.ActivePage := FormEditor.TabSheet2;
-  FormEditor.Show;
-  FormEditor.BringToFront;
+  OpenEditorPage(1);
 end;
 
 procedure TFormMenu.btnLayoutsClick(Sender: TObject);
 begin
-  if not Assigned(FormEditor) then
-    Application.CreateForm(TFormEditor, FormEditor);
-
-  FormEditor.PageControl1.ActivePage := FormEditor.TabSheet3;
-  FormEditor.Show;
-  FormEditor.BringToFront;
+  OpenEditorPage(2);
 end;
 
 procedure TFormMenu.btnAddCenterCityAntennaClick(Sender: TObject);
 begin
-  if not Assigned(FormEditor) then
-    Application.CreateForm(TFormEditor, FormEditor);
-
-  FormEditor.PageControl1.ActivePage := FormEditor.TabSheet1;
-  FormEditor.Show;
-  FormEditor.BringToFront;
+  OpenEditorPage(0);
 end;
 
 end.

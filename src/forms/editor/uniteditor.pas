@@ -166,12 +166,14 @@ type
     procedure StringGrid7SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
   private
     FCurrentImagePath: string;
+    FInitialized: Boolean;
     procedure RefreshMainForm;
     procedure LoadAllCombos;
     procedure ClearModelImageSelection;
     procedure RefreshCmpTab;
     function GetSelectedGridId(AGrid: TStringGrid): Integer;
   public
+    property IsReady: Boolean read FInitialized;
   end;
 
 var
@@ -232,6 +234,8 @@ end;
 
 procedure TFormEditor.FormCreate(Sender: TObject);
 begin
+  FInitialized := False;
+
   try
     ConnectToDatabase(PQConnection1, SQLTransaction1, SQLQuery1);
 
@@ -258,9 +262,14 @@ begin
 
     LoadAllCombos;
     ClearModelImageSelection;
+    FInitialized := True;
   except
     on E: Exception do
-      ShowMessage('Ошибка при открытии формы: ' + E.Message);
+    begin
+      ShowMessage('Не удалось открыть редактор ACCAC.' + LineEnding +
+        LineEnding + BuildStartupErrorMessage(E.Message));
+      Visible := False;
+    end;
   end;
 end;
 

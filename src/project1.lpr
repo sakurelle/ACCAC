@@ -19,7 +19,6 @@ begin
   Application.Scaled:=True;
   Application.Initialize;
   Application.CreateForm(TFormMain, FormMain);
-  Application.CreateForm(TFormEditor, FormEditor);
   Application.Run;
 end.
 

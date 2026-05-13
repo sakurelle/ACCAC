@@ -2,15 +2,15 @@
 
 ## Назначение проекта
 
-ACCAC - настольное приложение для отображения состава и состояния антенных комплексов. Система хранит предметные данные и параметры интерфейсного макета в PostgreSQL, а клиент на Lazarus визуализирует макет, антенны, связанные города, центры и статусы.
+ACCAC — настольное приложение на Lazarus / Free Pascal для отображения и редактирования данных об антенных комплексах. Клиентское приложение получает данные из PostgreSQL, строит визуальный макет комплекса и позволяет работать с центрами, городами, антеннами, состояниями, моделями и layout-компонентами.
 
 ## Используемые технологии
 
 - Lazarus / Free Pascal
 - PostgreSQL
-- Bash-скрипты для сборки и разворачивания БД
+- Bash-скрипты для установки, развёртывания БД и запуска
 - Apache JMeter для функционального и нагрузочного тестирования
-- PowerShell для генерации итогового DOCX-отчета
+- PowerShell для сборки итогового DOCX-отчёта
 
 ## Структура репозитория
 
@@ -18,6 +18,7 @@ ACCAC - настольное приложение для отображения 
 ACCAC/
 ├── install_accac.sh
 ├── src/
+│   ├── project1.lpi
 │   ├── forms/
 │   ├── domain/
 │   ├── infrastructure/
@@ -59,10 +60,11 @@ chmod +x install_accac.sh
 
 Скрипт:
 
-- устанавливает необходимые пакеты;
-- подготавливает роль и базу PostgreSQL;
-- применяет миграции из `db/postgresql/migrations/`;
-- создает локальный конфиг `src/config/accac.ini`;
+- проверяет наличие PostgreSQL и инструментов сборки;
+- при необходимости устанавливает системные пакеты;
+- проверяет роль приложения в PostgreSQL;
+- запускает миграции и выдачу прав через `db/postgresql/run_all.sh`;
+- подготавливает локальный `accac.ini`, если он ещё не создан;
 - собирает приложение через `scripts/build.sh`.
 
 ### Подготовка shell-скриптов
@@ -75,19 +77,34 @@ chmod +x install_accac.sh scripts/*.sh db/postgresql/run_all.sh tests/jmeter/run
 
 ## Настройка конфигурации
 
-В репозитории хранится только шаблон:
+В Git хранится только шаблон:
 
 ```text
 src/config/accac.example.ini
 ```
 
-Для локального запуска создайте рабочий конфиг:
+Рекомендуемое рабочее расположение локального конфига:
 
-```bash
-cp src/config/accac.example.ini src/config/accac.ini
+```text
+accac.ini
 ```
 
-При необходимости измените параметры подключения:
+Создайте его на основе примера:
+
+```bash
+cp src/config/accac.example.ini accac.ini
+```
+
+Приложение ищет `accac.ini` в нескольких местах:
+
+- в корне репозитория;
+- рядом с бинарником `build/project1`;
+- в `build/config/`;
+- в `src/config/`.
+
+Рекомендуемый вариант для ручного запуска и сопровождения — держать локальный файл в корне репозитория.
+
+Ожидаемые параметры подключения:
 
 ```ini
 [database]
@@ -96,19 +113,28 @@ port=5432
 database=accac
 user=accac_user
 password=change_me
-schema=sc_accac
 ```
 
-## Развертывание БД
+Параметр `schema` в конфиге сейчас не используется: SQL-запросы приложения обращаются к схеме `sc_accac` напрямую, поэтому права должны быть выданы именно на неё.
 
-Полный прогон миграций:
+## Развёртывание БД
+
+Основной скрипт развёртывания:
 
 ```bash
 chmod +x db/postgresql/run_all.sh
-DB_NAME=accac DB_USER=accac_user DB_PORT=5432 ./db/postgresql/run_all.sh
+APP_DB_NAME=accac APP_DB_USER=accac_user POSTGRES_USER=postgres ./db/postgresql/run_all.sh
 ```
 
-Скрипт выполняет файлы в фиксированном порядке:
+Скрипт:
+
+- проверяет существование роли приложения;
+- при наличии `APP_DB_PASSWORD` может создать роль автоматически;
+- создаёт базу данных, если она ещё не существует;
+- применяет миграции;
+- применяет `008_grants.sql` для выдачи прав пользователю приложения.
+
+Порядок миграций:
 
 1. `db/postgresql/migrations/001_schema.sql`
 2. `db/postgresql/migrations/002_tables.sql`
@@ -117,27 +143,52 @@ DB_NAME=accac DB_USER=accac_user DB_PORT=5432 ./db/postgresql/run_all.sh
 5. `db/postgresql/migrations/005_procedures.sql`
 6. `db/postgresql/migrations/006_triggers.sql`
 7. `db/postgresql/migrations/007_seed.sql`
+8. `db/postgresql/migrations/008_grants.sql`
 
 Для `007_seed.sql` автоматически используется каталог `db/postgresql/fixtures/hex/`.
+
+## Первый запуск
+
+1. Создайте пользователя БД:
+
+```bash
+sudo -u postgres psql -c "CREATE USER accac_user WITH PASSWORD 'change_me';"
+```
+
+2. Создайте базу данных, если она ещё не создана:
+
+```bash
+sudo -u postgres createdb accac
+```
+
+3. Примените миграции и выдайте права:
+
+```bash
+APP_DB_NAME=accac APP_DB_USER=accac_user POSTGRES_USER=postgres ./db/postgresql/run_all.sh
+```
+
+4. Создайте локальный конфиг:
+
+```bash
+cp src/config/accac.example.ini accac.ini
+```
+
+5. Отредактируйте `accac.ini` и укажите реальный пароль пользователя БД.
+
+6. Соберите и запустите проект:
+
+```bash
+./scripts/build.sh
+./scripts/run.sh
+```
 
 ## Сборка
 
 ```bash
-chmod +x scripts/build.sh
 ./scripts/build.sh
 ```
 
-Сборка использует Lazarus-проект:
-
-```text
-src/project1.lpi
-```
-
-Исполняемый файл создается в:
-
-```text
-build/project1
-```
+Сборка использует Lazarus-проект `src/project1.lpi`, а готовый бинарник размещается в `build/project1`.
 
 ## Запуск
 
@@ -148,14 +199,33 @@ build/project1
 ./scripts/run.sh
 ```
 
-Резервный вариант, если система сняла executable bit:
+Резервный вариант, если система сняла права на выполнение:
 
 ```bash
 chmod +x install_accac.sh scripts/*.sh db/postgresql/run_all.sh tests/jmeter/run_accac_db_limits.sh
 ./scripts/run.sh
 ```
 
-Приложение читает локальный конфиг `src/config/accac.ini`. Если файл лежит рядом с бинарником, он тоже будет найден.
+`scripts/run.sh` перед запуском проверяет наличие бинарника и локального `accac.ini`. Если конфиг отсутствует, приложение не будет запущено, а скрипт подскажет команду для его создания.
+
+## Типовая ошибка
+
+Если при запуске приложения появляется ошибка:
+
+```text
+PostgreSQL: ОШИБКА: нет доступа к схеме sc_accac
+SQL State: 42501
+```
+
+это означает, что пользователь из `accac.ini` не имеет прав на схему `sc_accac` и объекты внутри неё.
+
+Для исправления заново примените миграции и выдачу прав:
+
+```bash
+APP_DB_NAME=accac APP_DB_USER=accac_user POSTGRES_USER=postgres ./db/postgresql/run_all.sh
+```
+
+Либо вручную выполните `GRANT USAGE ON SCHEMA sc_accac` и права на таблицы, последовательности, функции и процедуры.
 
 ## Тестирование
 
@@ -186,13 +256,12 @@ jmeter \
 Пример поиска лимита по потокам:
 
 ```bash
-chmod +x tests/jmeter/run_accac_db_limits.sh
 ./tests/jmeter/run_accac_db_limits.sh
 ```
 
 ## Документация
 
 - Архитектурное описание: `docs/architecture/architecture.md`
-- Исходный markdown-отчет по тестированию: `docs/testing/testing_report.md`
-- Генератор DOCX-отчета: `docs/build_testing_report.ps1`
+- Исходный markdown-отчёт по тестированию: `docs/testing/testing_report.md`
+- Генератор DOCX-отчёта: `docs/build_testing_report.ps1`
 - Дополнительный архитектурный документ: `docs/architecture/Архитектура_ACCAC.docx`

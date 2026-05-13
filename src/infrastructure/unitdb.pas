@@ -7,6 +7,9 @@ interface
 uses
   Classes, SysUtils, IniFiles, SQLDB, PQConnection;
 
+function BuildDatabaseSetupMessage(const ADetails: string): string;
+function BuildStartupErrorMessage(const ADetails: string): string;
+
 procedure ConnectToDatabase(
   APQConnection: TPQConnection;
   ASQLTransaction: TSQLTransaction;
@@ -18,7 +21,7 @@ implementation
 function ResolveConfigPath: string;
 var
   BaseDir: string;
-  Candidates: array[0..2] of string;
+  Candidates: array[0..3] of string;
   I: Integer;
   MessageText: string;
 begin
@@ -28,6 +31,8 @@ begin
   Candidates[1] := IncludeTrailingPathDelimiter(BaseDir) + 'config' +
     DirectorySeparator + 'accac.ini';
   Candidates[2] := ExpandFileName(BaseDir + '..' + DirectorySeparator +
+    'accac.ini');
+  Candidates[3] := ExpandFileName(BaseDir + '..' + DirectorySeparator +
     'src' + DirectorySeparator + 'config' + DirectorySeparator + 'accac.ini');
 
   for I := Low(Candidates) to High(Candidates) do
@@ -36,12 +41,33 @@ begin
       Exit(Candidates[I]);
   end;
 
-  MessageText := 'Configuration file accac.ini not found. Checked:' + LineEnding;
+  MessageText := 'Файл конфигурации accac.ini не найден.' + LineEnding +
+    'Создайте его на основе примера:' + LineEnding +
+    'cp src/config/accac.example.ini accac.ini' + LineEnding +
+    'Затем укажите корректные параметры подключения к PostgreSQL.' +
+    LineEnding + LineEnding + 'Проверены пути:' + LineEnding;
 
   for I := Low(Candidates) to High(Candidates) do
     MessageText := MessageText + Candidates[I] + LineEnding;
 
   raise Exception.Create(TrimRight(MessageText));
+end;
+
+function BuildDatabaseSetupMessage(const ADetails: string): string;
+begin
+  Result := 'Не удалось получить данные из PostgreSQL.' + LineEnding +
+    'Проверьте, что база ACCAC развёрнута, пользователь из accac.ini ' +
+    'имеет доступ к схеме sc_accac, а миграция 008_grants.sql была ' +
+    'применена.' + LineEnding + LineEnding + 'Техническая информация:' +
+    LineEnding + ADetails;
+end;
+
+function BuildStartupErrorMessage(const ADetails: string): string;
+begin
+  if Pos('accac.ini', LowerCase(ADetails)) > 0 then
+    Exit(ADetails);
+
+  Result := BuildDatabaseSetupMessage(ADetails);
 end;
 
 procedure ConnectToDatabase(

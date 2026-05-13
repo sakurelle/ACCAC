@@ -134,7 +134,7 @@ begin
       FPaintBox.Invalidate;
   except
     on E: Exception do
-      ShowMessage('Ошибка обновления окна: ' + E.Message);
+      ShowMessage(BuildDatabaseSetupMessage(E.Message));
   end;
 end;
 
@@ -204,18 +204,25 @@ begin
   try
     ConnectToDatabase(PQConnection1, SQLTransaction1, SQLQuery1);
 
-    { макет по умолчанию }
+    { default layout }
     FCurrentLayoutId := 1;
-    RefreshMap;
+    UpdatePaintBoxSize;
 
-    { автоматически создаем и показываем форму меню }
+    if Assigned(FPaintBox) then
+      FPaintBox.Invalidate;
+
+    { create the menu only after the initial PostgreSQL load succeeds }
     if not Assigned(FormMenu) then
       Application.CreateForm(TFormMenu, FormMenu);
 
     FormMenu.Show;
   except
     on E: Exception do
-      ShowMessage('Ошибка подключения: ' + E.Message);
+    begin
+      ShowMessage(BuildStartupErrorMessage(E.Message));
+      Hide;
+      Application.Terminate;
+    end;
   end;
 end;
 
@@ -342,7 +349,7 @@ begin
     SQLQuery1.Close;
   except
     on E: Exception do
-      ShowMessage('Ошибка отрисовки: ' + E.Message);
+      ShowMessage(BuildDatabaseSetupMessage(E.Message));
   end;
 end;
 
