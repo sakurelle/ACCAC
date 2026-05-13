@@ -43,6 +43,70 @@ run_admin_psql() {
   fi
 }
 
+query_role_exists() {
+  run_admin_psql \
+    -d postgres \
+    -v APP_DB_USER="$APP_DB_USER" \
+    -tA <<'SQL'
+SELECT 1
+FROM pg_roles
+WHERE rolname = :'APP_DB_USER';
+SQL
+}
+
+query_database_exists() {
+  run_admin_psql \
+    -d postgres \
+    -v APP_DB_NAME="$APP_DB_NAME" \
+    -tA <<'SQL'
+SELECT 1
+FROM pg_database
+WHERE datname = :'APP_DB_NAME';
+SQL
+}
+
+create_role_if_missing() {
+  run_admin_psql \
+    -d postgres \
+    -v APP_DB_USER="$APP_DB_USER" \
+    -v APP_DB_PASSWORD="$APP_DB_PASSWORD" <<'SQL'
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_roles
+    WHERE rolname = :'APP_DB_USER'
+  ) THEN
+    EXECUTE format(
+      'CREATE USER %I WITH PASSWORD %L',
+      :'APP_DB_USER',
+      :'APP_DB_PASSWORD'
+    );
+  END IF;
+END
+$$;
+SQL
+}
+
+create_database_if_missing() {
+  run_admin_psql \
+    -d postgres \
+    -v APP_DB_NAME="$APP_DB_NAME" \
+    -v APP_DB_USER="$APP_DB_USER" <<'SQL'
+SELECT format(
+  'CREATE DATABASE %I OWNER %I',
+  :'APP_DB_NAME',
+  :'APP_DB_USER'
+)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM pg_database
+  WHERE datname = :'APP_DB_NAME'
+)
+\gexec
+SQL
+}
+
 if [ -z "$PSQL" ]; then
   echo "ERROR: psql command not found"
   exit 1
@@ -69,47 +133,29 @@ echo "Repository root: $REPO_ROOT"
 echo "Target database: $APP_DB_NAME"
 echo "Application role: $APP_DB_USER"
 
-ROLE_EXISTS="$(
-  run_admin_psql \
-    -d postgres \
-    -v APP_DB_USER="$APP_DB_USER" \
-    -tAc "SELECT 1 FROM pg_roles WHERE rolname = :'APP_DB_USER';"
-)"
+ROLE_EXISTS="$(query_role_exists | tr -d '[:space:]')"
 
 if [ "$ROLE_EXISTS" != "1" ]; then
   if [ -n "$APP_DB_PASSWORD" ]; then
     echo "Creating PostgreSQL role $APP_DB_USER..."
-    run_admin_psql \
-      -d postgres \
-      -v APP_DB_USER="$APP_DB_USER" \
-      -v APP_DB_PASSWORD="$APP_DB_PASSWORD" \
-      -c "CREATE USER :\"APP_DB_USER\" WITH PASSWORD :'APP_DB_PASSWORD';"
+    create_role_if_missing
   else
-    echo "Пользователь БД $APP_DB_USER не найден."
-    echo "Создайте его перед развёртыванием БД:"
+    echo "Database role $APP_DB_USER was not found."
+    echo "Create it before deploying the database:"
     echo "sudo -u postgres psql -c \"CREATE USER $APP_DB_USER WITH PASSWORD 'change_me';\""
     echo
-    echo "Либо запустите скрипт с APP_DB_PASSWORD для автоматического создания роли."
+    echo "Or rerun the script with APP_DB_PASSWORD to create the role automatically."
     exit 1
   fi
 fi
 
-DB_EXISTS="$(
-  run_admin_psql \
-    -d postgres \
-    -v APP_DB_NAME="$APP_DB_NAME" \
-    -tAc "SELECT 1 FROM pg_database WHERE datname = :'APP_DB_NAME';"
-)"
+DB_EXISTS="$(query_database_exists | tr -d '[:space:]')"
 
 if [ "$DB_EXISTS" = "1" ]; then
   echo "Database $APP_DB_NAME already exists."
 else
   echo "Creating database $APP_DB_NAME..."
-  run_admin_psql \
-    -d postgres \
-    -v APP_DB_NAME="$APP_DB_NAME" \
-    -v APP_DB_USER="$APP_DB_USER" \
-    -c "CREATE DATABASE :\"APP_DB_NAME\" OWNER :\"APP_DB_USER\";"
+  create_database_if_missing
 fi
 
 for migration in "${MIGRATIONS[@]}"; do

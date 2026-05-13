@@ -12,7 +12,7 @@ APP_DB_HOST="${APP_DB_HOST:-${DB_HOST:-localhost}}"
 APP_DB_PORT="${APP_DB_PORT:-${DB_PORT:-5432}}"
 APP_DB_NAME="${APP_DB_NAME:-${DB_NAME:-accac}}"
 APP_DB_USER="${APP_DB_USER:-${DB_USER:-accac_user}}"
-APP_DB_PASSWORD="${APP_DB_PASSWORD:-${DB_PASSWORD:-change_me}}"
+APP_DB_PASSWORD="${APP_DB_PASSWORD:-${DB_PASSWORD:-}}"
 POSTGRES_USER="${POSTGRES_USER:-${PGSYSTEM_USER:-postgres}}"
 
 PSQL="${PSQL:-$(command -v psql || true)}"
@@ -33,6 +33,17 @@ run_admin_psql() {
       -v ON_ERROR_STOP=1 \
       "$@"
   fi
+}
+
+query_role_exists() {
+  run_admin_psql \
+    -d postgres \
+    -v APP_DB_USER="$APP_DB_USER" \
+    -tA <<'SQL'
+SELECT 1
+FROM pg_roles
+WHERE rolname = :'APP_DB_USER';
+SQL
 }
 
 if [ -n "$SUDO_BIN" ] && [ "$POSTGRES_USER" = "postgres" ] && \
@@ -103,22 +114,20 @@ fi
 
 echo
 echo "=== Checking application database role ==="
-ROLE_EXISTS="$(
-  run_admin_psql \
-    -d postgres \
-    -v APP_DB_USER="$APP_DB_USER" \
-    -tAc "SELECT 1 FROM pg_roles WHERE rolname = :'APP_DB_USER';"
-)"
+ROLE_EXISTS="$(query_role_exists | tr -d '[:space:]')"
 
 if [ "$ROLE_EXISTS" = "1" ]; then
   echo "Role $APP_DB_USER already exists."
+elif [ -n "$APP_DB_PASSWORD" ]; then
+  echo "Role $APP_DB_USER was not found."
+  echo "db/postgresql/run_all.sh will create it automatically."
 else
-  echo "Creating role $APP_DB_USER with temporary password change_me..."
-  run_admin_psql \
-    -d postgres \
-    -v APP_DB_USER="$APP_DB_USER" \
-    -v APP_DB_PASSWORD="$APP_DB_PASSWORD" \
-    -c "CREATE USER :\"APP_DB_USER\" WITH PASSWORD :'APP_DB_PASSWORD';"
+  echo "Role $APP_DB_USER was not found."
+  echo "Create it before running the installer:"
+  echo "sudo -u postgres psql -c \"CREATE USER $APP_DB_USER WITH PASSWORD 'change_me';\""
+  echo
+  echo "Or rerun the installer with APP_DB_PASSWORD to allow automatic role creation."
+  exit 1
 fi
 
 echo
