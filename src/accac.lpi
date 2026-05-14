@@ -14,8 +14,8 @@
       </XPManifest>
       <Icon Value="0"/>
     </General>
-    <BuildModes>
-      <Item Name="Default" Default="True"/>
+    <BuildModes Count="1">
+      <Item1 Name="Default" Default="True"/>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -24,83 +24,84 @@
     <RunParams>
       <FormatVersion Value="2"/>
     </RunParams>
-    <RequiredPackages>
-      <Item>
+    <RequiredPackages Count="2">
+      <Item1>
         <PackageName Value="FCL"/>
-      </Item>
-      <Item>
+      </Item1>
+      <Item2>
         <PackageName Value="LCL"/>
-      </Item>
+      </Item2>
     </RequiredPackages>
-    <Units>
-      <Unit>
+    <Units Count="12">
+      <Unit0>
         <Filename Value="accac.lpr"/>
         <IsPartOfProject Value="True"/>
-      </Unit>
-      <Unit>
+        <UnitName Value="accac"/>
+      </Unit0>
+      <Unit1>
         <Filename Value="forms/main/unit1.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormMain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
-      </Unit>
-      <Unit>
+      </Unit1>
+      <Unit2>
         <Filename Value="forms/editor/uniteditor.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormEditor"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="UnitEditor"/>
-      </Unit>
-      <Unit>
+      </Unit2>
+      <Unit3>
         <Filename Value="forms/menu/unitmenu.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormMenu"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="UnitMenu"/>
-      </Unit>
-      <Unit>
+      </Unit3>
+      <Unit4>
         <Filename Value="infrastructure/unitdb.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitDb"/>
-      </Unit>
-      <Unit>
+      </Unit4>
+      <Unit5>
         <Filename Value="domain/unitctr.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitCtr"/>
-      </Unit>
-      <Unit>
+      </Unit5>
+      <Unit6>
         <Filename Value="domain/unitstat.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitStat"/>
-      </Unit>
-      <Unit>
+      </Unit6>
+      <Unit7>
         <Filename Value="domain/unitlyt.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitLyt"/>
-      </Unit>
-      <Unit>
+      </Unit7>
+      <Unit8>
         <Filename Value="domain/unitmdl.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitMdl"/>
-      </Unit>
-      <Unit>
+      </Unit8>
+      <Unit9>
         <Filename Value="domain/unitcity.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitCity"/>
-      </Unit>
-      <Unit>
+      </Unit9>
+      <Unit10>
         <Filename Value="domain/unitant.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitAnt"/>
-      </Unit>
-      <Unit>
+      </Unit10>
+      <Unit11>
         <Filename Value="domain/unitcmp.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitCmp"/>
-      </Unit>
+      </Unit11>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -125,16 +126,16 @@
     </Linking>
   </CompilerOptions>
   <Debugging>
-    <Exceptions>
-      <Item>
+    <Exceptions Count="3">
+      <Item1>
         <Name Value="EAbort"/>
-      </Item>
-      <Item>
+      </Item1>
+      <Item2>
         <Name Value="ECodetoolError"/>
-      </Item>
-      <Item>
+      </Item2>
+      <Item3>
         <Name Value="EFOpenError"/>
-      </Item>
+      </Item3>
     </Exceptions>
   </Debugging>
 </CONFIG>

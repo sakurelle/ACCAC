@@ -1,39 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_FILE="$ROOT_DIR/build/accac"
-CONFIG_CANDIDATES=(
-  "$ROOT_DIR/accac.ini"
-  "$ROOT_DIR/build/accac.ini"
-  "$ROOT_DIR/build/config/accac.ini"
-  "$ROOT_DIR/src/config/accac.ini"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG_FILE="$ROOT_DIR/accac.ini"
+APP_CANDIDATES=(
+  "$ROOT_DIR/accac"
+  "$ROOT_DIR/build/accac"
 )
 
-resolve_config_path() {
-  local candidate
-
-  for candidate in "${CONFIG_CANDIDATES[@]}"; do
-    if [ -f "$candidate" ]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-if [ ! -f "$APP_FILE" ]; then
-  echo "ERROR: binary not found: $APP_FILE"
-  echo "Run ./scripts/build.sh first."
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "ERROR: configuration file not found: $CONFIG_FILE"
+  echo "Run ./install_accac.sh first, or create accac.ini from config/accac.example.ini."
   exit 1
 fi
 
-if ! CONFIG_FILE="$(resolve_config_path)"; then
-  echo "Файл конфигурации accac.ini не найден."
-  echo "Создайте его на основе примера:"
-  echo "cp src/config/accac.example.ini accac.ini"
-  echo "Затем укажите корректные параметры подключения к PostgreSQL."
+APP_FILE=""
+for candidate in "${APP_CANDIDATES[@]}"; do
+  if [ -f "$candidate" ]; then
+    APP_FILE="$candidate"
+    break
+  fi
+done
+
+if [ -z "$APP_FILE" ]; then
+  echo "ERROR: ACCAC binary was not found."
+  echo "Expected one of:"
+  echo "  $ROOT_DIR/accac"
+  echo "  $ROOT_DIR/build/accac"
+  echo "For source installs, run ./scripts/build.sh first."
   exit 1
 fi
 

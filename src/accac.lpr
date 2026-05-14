@@ -13,7 +13,8 @@ uses
   Forms,
   Unit1,
   UnitEditor,
-  UnitMenu;
+  UnitMenu,
+  UnitDb;
 
 {$R *.res}
 

@@ -32,6 +32,8 @@ chmod +x accac install_accac.sh scripts/*.sh db/postgresql/run_all.sh
 ./accac
 ```
 
+Ручные SQL-команды выполнять не нужно. Установщик сам проверяет PostgreSQL, создаёт роль `accac_user`, создаёт базу `accac`, применяет миграции, выдаёт права и создаёт локальный `accac.ini`. Может потребоваться только ввод sudo-пароля ОС. Lazarus для установки из release-архива не требуется.
+
 ### Сценарий 2 — установка из исходников
 
 Этот вариант нужен разработчику или проверяющему, который хочет собрать приложение локально:
@@ -75,12 +77,6 @@ POSTGRES_TARGET_MAJOR=11 ./install_accac.sh
 ```bash
 ./scripts/build.sh
 ./scripts/run.sh
-```
-
-Если `install_accac.sh` сообщает, что роль приложения ещё не создана, сначала выполните:
-
-```bash
-sudo -u postgres psql -c "CREATE USER accac_user WITH PASSWORD 'change_me';"
 ```
 
 Если при выполнении `./install_accac.sh` когда-либо появляется ошибка вида:
