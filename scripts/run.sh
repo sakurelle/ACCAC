@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_FILE="$ROOT_DIR/build/project1"
+APP_FILE="$ROOT_DIR/build/accac"
 CONFIG_CANDIDATES=(
   "$ROOT_DIR/accac.ini"
   "$ROOT_DIR/build/accac.ini"

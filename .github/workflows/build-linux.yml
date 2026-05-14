@@ -1,4 +1,4 @@
-name: Build Linux project1
+name: Build Linux ACCAC
 
 on:
   workflow_dispatch:
@@ -34,4 +34,4 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: accac-linux-binary
-          path: build/project1
+          path: build/accac

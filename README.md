@@ -48,12 +48,20 @@ chmod +x install_accac.sh scripts/*.sh db/postgresql/run_all.sh tests/jmeter/run
 - проверяет серверную версию PostgreSQL;
 - применяет SQL-миграции через `db/postgresql/run_all.sh`;
 - подготавливает локальный `accac.ini`;
-- собирает приложение.
+- собирает Lazarus-проект `src/accac.lpi`;
+- формирует исполняемый файл `build/accac`.
 
 При необходимости можно явно выбрать целевую ветку серверного пакета из системного репозитория:
 
 ```bash
 POSTGRES_TARGET_MAJOR=11 ./install_accac.sh
+```
+
+После установки или при ручной пересборке используйте:
+
+```bash
+./scripts/build.sh
+./scripts/run.sh
 ```
 
 Если `install_accac.sh` сообщает, что роль приложения ещё не создана, сначала выполните:

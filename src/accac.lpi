@@ -5,7 +5,7 @@
     <General>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
-      <Title Value="project1"/>
+      <Title Value="accac"/>
       <Scaled Value="True"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
@@ -34,7 +34,7 @@
     </RequiredPackages>
     <Units>
       <Unit>
-        <Filename Value="project1.lpr"/>
+        <Filename Value="accac.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
@@ -106,7 +106,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="../build/project1"/>
+      <Filename Value="../build/accac"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>

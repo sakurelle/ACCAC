@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_DIR="$ROOT_DIR/src"
-PROJECT_FILE="$PROJECT_DIR/project1.lpi"
-OUTPUT_FILE="$ROOT_DIR/build/project1"
+PROJECT_FILE="$PROJECT_DIR/accac.lpi"
+OUTPUT_FILE="$ROOT_DIR/build/accac"
 
 if [ ! -f "$PROJECT_FILE" ]; then
   echo "ERROR: project file not found: $PROJECT_FILE"
@@ -19,8 +19,8 @@ fi
 mkdir -p "$ROOT_DIR/build"
 rm -f "$OUTPUT_FILE"
 
-cd "$PROJECT_DIR"
-lazbuild -B "$(basename "$PROJECT_FILE")"
+cd "$ROOT_DIR"
+lazbuild -B "$PROJECT_FILE"
 
 if [ ! -f "$OUTPUT_FILE" ]; then
   echo "ERROR: build finished without output binary: $OUTPUT_FILE"
