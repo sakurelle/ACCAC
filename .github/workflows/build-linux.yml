@@ -1,10 +1,13 @@
-name: Build Linux ACCAC
+name: Build legacy Linux ACCAC
 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -14,24 +17,247 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Install Lazarus and PostgreSQL client libraries
+      - name: Create Dockerfile and build script
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            lazarus \
-            fpc \
-            fpc-source \
-            fp-units-db \
-            libpq5 \
-            libpq-dev \
-            libgtk2.0-dev
+          cat > Dockerfile.legacy <<'EOF'
+          FROM debian/eol:jessie
 
-      - name: Build project
+          RUN printf 'Acquire::Check-Valid-Until "false";\nAcquire::AllowInsecureRepositories "true";\n' \
+              > /etc/apt/apt.conf.d/99legacy
+
+          RUN printf '%s\n' \
+              'deb http://archive.debian.org/debian jessie main contrib non-free' \
+              'deb http://archive.debian.org/debian-security jessie/updates main contrib non-free' \
+              > /etc/apt/sources.list
+
+          RUN apt-get update || true
+
+          RUN apt-get install -y --force-yes \
+              lazarus \
+              fpc \
+              fpc-source \
+              fp-units-db \
+              libpq5 \
+              libpq-dev \
+              libgtk2.0-dev \
+              binutils \
+              file \
+              tar \
+              gzip \
+              grep \
+              sed
+
+          WORKDIR /src
+          EOF
+
+          cat > build-inside-container.sh <<'EOF'
+          #!/bin/bash
+          set -e
+
+          ROOT_DIR="/src"
+          PROJECT_DIR="$ROOT_DIR/src"
+          OUTPUT_FILE="$ROOT_DIR/build/accac"
+
+          cd "$PROJECT_DIR"
+
+          echo "=== Current directory ==="
+          pwd
+          ls -la
+
+          echo "=== Build environment glibc ==="
+          ldd --version | head -n 1
+
+          echo "=== Patch accac.lpr for old Lazarus ==="
+          sed -i 's/Application\.Scaled:=True;//g' accac.lpr
+          sed -i 's/Application\.Scaled := True;//g' accac.lpr
+
+          echo "=== Create legacy Lazarus project file ==="
+          cat > accac_legacy.lpi <<'LPI'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <CONFIG>
+            <ProjectOptions>
+              <Version Value="9"/>
+              <General>
+                <SessionStorage Value="InProjectDir"/>
+                <MainUnit Value="0"/>
+                <Title Value="accac"/>
+                <ResourceType Value="res"/>
+                <UseXPManifest Value="True"/>
+              </General>
+              <BuildModes Count="1">
+                <Item1 Name="Default" Default="True"/>
+              </BuildModes>
+              <PublishOptions>
+                <Version Value="2"/>
+              </PublishOptions>
+              <RunParams>
+                <local>
+                  <FormatVersion Value="1"/>
+                </local>
+              </RunParams>
+              <RequiredPackages Count="2">
+                <Item1>
+                  <PackageName Value="FCL"/>
+                </Item1>
+                <Item2>
+                  <PackageName Value="LCL"/>
+                </Item2>
+              </RequiredPackages>
+              <Units Count="11">
+                <Unit0>
+                  <Filename Value="accac.lpr"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="accac"/>
+                </Unit0>
+                <Unit1>
+                  <Filename Value="forms/main/unit1.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <ComponentName Value="FormMain"/>
+                  <HasResources Value="True"/>
+                  <ResourceBaseClass Value="Form"/>
+                  <UnitName Value="Unit1"/>
+                </Unit1>
+                <Unit2>
+                  <Filename Value="forms/editor/uniteditor.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <ComponentName Value="FormEditor"/>
+                  <HasResources Value="True"/>
+                  <ResourceBaseClass Value="Form"/>
+                  <UnitName Value="UnitEditor"/>
+                </Unit2>
+                <Unit3>
+                  <Filename Value="forms/menu/unitmenu.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <ComponentName Value="FormMenu"/>
+                  <HasResources Value="True"/>
+                  <ResourceBaseClass Value="Form"/>
+                  <UnitName Value="UnitMenu"/>
+                </Unit3>
+                <Unit4>
+                  <Filename Value="infrastructure/unitdb.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitDb"/>
+                </Unit4>
+                <Unit5>
+                  <Filename Value="domain/unitctr.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitCtr"/>
+                </Unit5>
+                <Unit6>
+                  <Filename Value="domain/unitstat.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitStat"/>
+                </Unit6>
+                <Unit7>
+                  <Filename Value="domain/unitlyt.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitLyt"/>
+                </Unit7>
+                <Unit8>
+                  <Filename Value="domain/unitmdl.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitMdl"/>
+                </Unit8>
+                <Unit9>
+                  <Filename Value="domain/unitcity.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitCity"/>
+                </Unit9>
+                <Unit10>
+                  <Filename Value="domain/unitant.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitAnt"/>
+                </Unit10>
+                <Unit11>
+                  <Filename Value="domain/unitcmp.pas"/>
+                  <IsPartOfProject Value="True"/>
+                  <UnitName Value="UnitCmp"/>
+                </Unit11>
+              </Units>
+            </ProjectOptions>
+            <CompilerOptions>
+              <Version Value="11"/>
+              <Target>
+                <Filename Value="../build/accac"/>
+              </Target>
+              <SearchPaths>
+                <IncludeFiles Value="$(ProjOutDir)"/>
+                <OtherUnitFiles Value="forms/main;forms/editor;forms/menu;domain;infrastructure"/>
+                <UnitOutputDirectory Value="../build/lib/$(TargetCPU)-$(TargetOS)"/>
+              </SearchPaths>
+              <Linking>
+                <Options>
+                  <Win32>
+                    <GraphicApplication Value="True"/>
+                  </Win32>
+                </Options>
+              </Linking>
+              <Other>
+                <CompilerPath Value="$(CompPath)"/>
+              </Other>
+            </CompilerOptions>
+          </CONFIG>
+          LPI
+
+          echo "=== Build accac ==="
+          mkdir -p "$ROOT_DIR/build"
+          rm -f "$OUTPUT_FILE"
+
+          lazbuild -B accac_legacy.lpi
+
+          if [ ! -f "$OUTPUT_FILE" ]; then
+            echo "ERROR: build finished without output binary: $OUTPUT_FILE"
+            exit 1
+          fi
+
+          chmod +x "$OUTPUT_FILE"
+
+          echo "=== Binary info ==="
+          file "$OUTPUT_FILE"
+
+          echo "=== Required GLIBC versions ==="
+          readelf -V "$OUTPUT_FILE" | grep -o 'GLIBC_[0-9.]*' | sort -u || true
+
+          echo "=== Check for too new GLIBC ==="
+          if readelf -V "$OUTPUT_FILE" | grep -E 'GLIBC_2\.(2[1-9]|[3-9][0-9])'; then
+            echo "ERROR: accac requires GLIBC newer than 2.20"
+            exit 1
+          fi
+
+          echo "=== Dynamic dependencies ==="
+          ldd "$OUTPUT_FILE" || true
+          EOF
+
+          chmod +x build-inside-container.sh
+
+      - name: Build Docker image
         run: |
-          ./scripts/build.sh
+          docker build -t accac-build-legacy -f Dockerfile.legacy .
 
-      - name: Upload binary artifact
+      - name: Build ACCAC binary
+        run: |
+          docker run --rm \
+            -v "$PWD":/src \
+            accac-build-legacy \
+            /src/build-inside-container.sh
+
+      - name: Pack artifact
+        run: |
+          mkdir -p dist
+          cp build/accac dist/
+
+          if [ -f accac.ini ]; then
+            cp accac.ini dist/
+          fi
+
+          if [ -f src/config/accac.example.ini ]; then
+            cp src/config/accac.example.ini dist/
+          fi
+
+          tar -czf accac-linux-glibc220.tar.gz -C dist .
+
+      - name: Upload binary
         uses: actions/upload-artifact@v6
         with:
-          name: accac-linux-binary
-          path: build/accac
+          name: accac-linux-glibc220
+          path: accac-linux-glibc220.tar.gz
