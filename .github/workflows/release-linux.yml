@@ -53,6 +53,7 @@ jobs:
           chmod +x package/accac/accac
           chmod +x package/accac/install_accac.sh
           chmod +x package/accac/scripts/*.sh || true
+          chmod +x package/accac/db/postgresql/run_all.sh || true
           tar -czf accac-linux-astra.tar.gz -C package accac
 
       - name: Upload release asset

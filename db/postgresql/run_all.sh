@@ -17,7 +17,6 @@ CREATEDB_BIN="${CREATEDB_BIN:-$(command -v createdb || true)}"
 SUDO_BIN="${SUDO_BIN:-$(command -v sudo || true)}"
 RUNUSER_BIN="${RUNUSER_BIN:-$(command -v runuser || true)}"
 USE_LOCAL_POSTGRES_OS_USER=0
-MIN_SERVER_VERSION_NUM=110000
 RUNTIME_FIXTURES_DIR=""
 
 MIGRATIONS=(
@@ -98,16 +97,16 @@ run_psql_file() {
 
   if [ "$USE_LOCAL_POSTGRES_OS_USER" -eq 1 ]; then
     if [ "$(id -un)" = "$POSTGRES_USER" ]; then
-      (cd /tmp && "$PSQL" -v ON_ERROR_STOP=1 "$@" -p "$APP_DB_PORT" -d "$database" < "$file")
+      (cd /tmp && "$PSQL" -v ON_ERROR_STOP=1 -v APP_DB_NAME="$APP_DB_NAME" -v APP_DB_USER="$APP_DB_USER" "$@" -p "$APP_DB_PORT" -d "$database" < "$file")
     elif [ -n "$SUDO_BIN" ]; then
-      (cd /tmp && "$SUDO_BIN" -u "$POSTGRES_USER" "$PSQL" -v ON_ERROR_STOP=1 "$@" -p "$APP_DB_PORT" -d "$database" < "$file")
+      (cd /tmp && "$SUDO_BIN" -u "$POSTGRES_USER" "$PSQL" -v ON_ERROR_STOP=1 -v APP_DB_NAME="$APP_DB_NAME" -v APP_DB_USER="$APP_DB_USER" "$@" -p "$APP_DB_PORT" -d "$database" < "$file")
     elif [ -n "$RUNUSER_BIN" ] && [ "$(id -u)" -eq 0 ]; then
-      (cd /tmp && "$RUNUSER_BIN" -u "$POSTGRES_USER" -- "$PSQL" -v ON_ERROR_STOP=1 "$@" -p "$APP_DB_PORT" -d "$database" < "$file")
+      (cd /tmp && "$RUNUSER_BIN" -u "$POSTGRES_USER" -- "$PSQL" -v ON_ERROR_STOP=1 -v APP_DB_NAME="$APP_DB_NAME" -v APP_DB_USER="$APP_DB_USER" "$@" -p "$APP_DB_PORT" -d "$database" < "$file")
     else
       fail "Unable to switch to the local PostgreSQL OS user $POSTGRES_USER."
     fi
   else
-    "$PSQL" -h "$APP_DB_HOST" -p "$APP_DB_PORT" -U "$POSTGRES_USER" -v ON_ERROR_STOP=1 "$@" -d "$database" < "$file"
+    "$PSQL" -h "$APP_DB_HOST" -p "$APP_DB_PORT" -U "$POSTGRES_USER" -v ON_ERROR_STOP=1 -v APP_DB_NAME="$APP_DB_NAME" -v APP_DB_USER="$APP_DB_USER" "$@" -d "$database" < "$file"
   fi
 }
 
@@ -123,8 +122,8 @@ require_supported_server_version() {
     fail "Unable to determine the PostgreSQL server version."
   fi
 
-  if [ "$server_version_num" -lt "$MIN_SERVER_VERSION_NUM" ]; then
-    fail "ACCAC requires PostgreSQL 11 or newer. Detected server_version_num=$server_version_num."
+  if [ "$server_version_num" -lt 110000 ] || [ "$server_version_num" -ge 140000 ]; then
+    fail "unsupported PostgreSQL version. ACCAC supports PostgreSQL 11, 12 and 13 only."
   fi
 }
 

@@ -2,27 +2,29 @@
 
 ## Назначение проекта
 
-ACCAC — настольное приложение для работы с данными антенных систем. Оно использует PostgreSQL как основное хранилище данных, а пользовательский интерфейс реализован на Lazarus / Free Pascal.
+ACCAC — настольное приложение для работы с данными антенных систем. Приложение использует PostgreSQL как хранилище данных, а пользовательский интерфейс реализован на Lazarus / Free Pascal.
 
 ## Требования
 
-- Astra Linux или совместимая Linux-система
-- PostgreSQL 11 или новее
-- Целевая совместимость для среды преподавателя: PostgreSQL 11
-- Lazarus / Free Pascal
-- Git
-- Bash
-- Apache JMeter только для нагрузочного тестирования
+Для запуска готового release-архива:
+
+- Astra Linux 1.7 или 1.8;
+- PostgreSQL 11, 12 или 13;
+- PostgreSQL 14, 15 и выше не поддерживаются;
+- postgresql-client;
+- libpq5;
+- libgtk2.0-0.
+
+Для сборки из исходников:
+
+- Lazarus 2.2.0;
+- Free Pascal 3.2.2.
+
+Apache JMeter нужен только для нагрузочного тестирования.
 
 ## Установка
 
-### Сценарий 1 — установка из готового релиза
-
-Для преподавателя предпочтителен готовый GitHub Release: он содержит уже собранный `accac-linux-astra.tar.gz` и не требует сборки Lazarus-проекта на стороне пользователя.
-
-1. Скачайте `accac-linux-astra.tar.gz` из раздела GitHub Releases.
-2. Распакуйте архив и перейдите в каталог приложения.
-3. Выполните:
+Основной сценарий — установка из готового release-архива:
 
 ```bash
 tar -xzf accac-linux-astra.tar.gz
@@ -32,83 +34,52 @@ chmod +x accac install_accac.sh scripts/*.sh db/postgresql/run_all.sh
 ./accac
 ```
 
-Ручные SQL-команды выполнять не нужно. Установщик сам проверяет PostgreSQL, создаёт роль `accac_user`, создаёт базу `accac`, применяет миграции, выдаёт права и создаёт локальный `accac.ini`. Может потребоваться только ввод sudo-пароля ОС. Lazarus для установки из release-архива не требуется.
+Ручные SQL-команды не нужны. Установщик сам создаёт роль `accac_user`, создаёт базу `accac`, применяет миграции и создаёт `accac.ini`. Может потребоваться ввод sudo-пароля ОС. Lazarus и Free Pascal для release-архива не требуются.
 
-### Сценарий 2 — установка из исходников
+Если установщик сообщает, что PostgreSQL 11, 12 или 13 не найден в репозиториях, нужно подключить системные репозитории Astra Linux. Установщик не подключает репозитории автоматически, потому что это системная настройка ОС.
 
-Этот вариант нужен разработчику или проверяющему, который хочет собрать приложение локально:
+Для Astra Linux 1.7 рекомендуемый пакет:
+
+```bash
+sudo apt update
+sudo apt install -y postgresql-11 postgresql-client libpq5 libgtk2.0-0
+```
+
+Для Astra Linux 1.8 сначала проверьте доступные пакеты:
+
+```bash
+apt-cache policy postgresql-13
+apt-cache policy postgresql-12
+apt-cache policy postgresql-11
+```
+
+Затем установите одну из разрешённых версий:
+
+```bash
+sudo apt install -y postgresql-13 postgresql-client libpq5 libgtk2.0-0
+# или
+sudo apt install -y postgresql-12 postgresql-client libpq5 libgtk2.0-0
+# или
+sudo apt install -y postgresql-11 postgresql-client libpq5 libgtk2.0-0
+```
+
+Не устанавливайте PostgreSQL 14, 15 или выше.
+
+Сборка из исходников:
 
 ```bash
 git clone https://github.com/sakurelle/ACCAC.git
 cd ACCAC
 chmod +x install_accac.sh scripts/*.sh db/postgresql/run_all.sh tests/jmeter/run_accac_db_limits.sh
 ./install_accac.sh
-./scripts/build.sh
 ./scripts/run.sh
 ```
-
-Дополнительный быстрый вариант через bootstrap-скрипт:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/sakurelle/ACCAC/main/scripts/bootstrap_install.sh | bash
-```
-
-`install_accac.sh`:
-
-- проверяет, установлен ли PostgreSQL;
-- использует уже установленный PostgreSQL, если его major version не ниже 11;
-- если PostgreSQL не установлен, пытается поставить совместимую версию из штатных репозиториев ОС;
-- при отсутствии `POSTGRES_TARGET_MAJOR` сначала предпочитает `postgresql-11`, затем `postgresql-13`, затем метапакет `postgresql`;
-- блокирует установку, если итоговая версия PostgreSQL ниже 11;
-- проверяет серверную версию PostgreSQL;
-- применяет SQL-миграции через `db/postgresql/run_all.sh`;
-- подготавливает локальный `accac.ini`;
-- собирает Lazarus-проект `src/accac.lpi`;
-- формирует исполняемый файл `build/accac`.
-
-При необходимости можно явно выбрать целевую ветку серверного пакета из системного репозитория:
-
-```bash
-POSTGRES_TARGET_MAJOR=11 ./install_accac.sh
-```
-
-После установки или при ручной пересборке используйте:
-
-```bash
-./scripts/build.sh
-./scripts/run.sh
-```
-
-Если при выполнении `./install_accac.sh` когда-либо появляется ошибка вида:
-
-```text
-ОШИБКА: ошибка синтаксиса около ":"
-SELECT 1 FROM pg_roles WHERE rolname = :'APP_DB_USER';
-```
-
-это означает, что в локальной копии скрипта используется psql-переменная внутри `psql -c`. В текущем состоянии репозитория такой ошибки быть не должно.
 
 ## Настройка конфигурации
 
-Шаблон конфигурации лежит в:
+Рабочий конфиг `accac.ini` создаётся установщиком автоматически и не хранится в Git. В release-архиве шаблон лежит в `config/accac.example.ini`, а в исходниках — в `src/config/accac.example.ini`.
 
-```text
-src/config/accac.example.ini
-```
-
-Рабочий файл должен называться:
-
-```text
-accac.ini
-```
-
-`accac.ini` не хранится в Git. Если он не был создан автоматически, создайте его вручную:
-
-```bash
-cp src/config/accac.example.ini accac.ini
-```
-
-После копирования укажите реальные параметры подключения к PostgreSQL. Пример:
+По умолчанию используются значения:
 
 ```ini
 [database]
@@ -119,62 +90,63 @@ user=accac_user
 password=change_me
 ```
 
-Приложение ожидает локальный конфиг в рабочем дереве проекта. Перед первым запуском также нужно развернуть базу данных и выдать права:
+Их можно переопределить перед запуском установщика через переменные окружения, например:
 
 ```bash
-APP_DB_NAME=accac APP_DB_USER=accac_user POSTGRES_USER=postgres ./db/postgresql/run_all.sh
+APP_DB_NAME=accac APP_DB_USER=accac_user APP_DB_PASSWORD=change_me ./install_accac.sh
 ```
 
-Миграция `db/postgresql/migrations/008_grants.sql` выдаёт права пользователю приложения и должна запускаться через `db/postgresql/run_all.sh`, потому что скрипт передаёт `APP_DB_NAME` и `APP_DB_USER` через `psql -v`.
+Если роль уже существует и нужно принудительно обновить пароль, используйте:
+
+```bash
+RESET_APP_DB_PASSWORD=1 ./install_accac.sh
+```
 
 ## Структура репозитория
 
 ```text
 ACCAC/
 ├── README.md
-├── .gitignore
-├── .gitattributes
 ├── install_accac.sh
 ├── src/
 ├── db/
+├── scripts/
 ├── tests/
 ├── docs/
-├── scripts/
 └── .github/
 ```
 
-- `src/` — исходный код Lazarus / Free Pascal
-- `db/postgresql/migrations/` — SQL-миграции
-- `tests/jmeter/` — JMeter-тесты
-- `docs/` — документация и материалы отчёта
-- `scripts/` — вспомогательные скрипты
-- `.github/` — CI/CD
+- `src/` — исходный код Lazarus / Free Pascal;
+- `db/postgresql/migrations/` — SQL-миграции;
+- `scripts/` — вспомогательные скрипты;
+- `tests/jmeter/` — JMeter-тесты;
+- `docs/` — документация и материалы отчёта;
+- `.github/` — CI/CD.
+
+Release-архив имеет структуру:
+
+```text
+accac/
+├── accac
+├── install_accac.sh
+├── scripts/
+├── db/
+├── config/
+│   └── accac.example.ini
+└── README.md
+```
 
 ## Тестирование
 
 JMeter-планы лежат в:
 
-- `tests/jmeter/plans/ACCAC.jmx`
-- `tests/jmeter/plans/ACCAC_DB_LIMITS.jmx`
+- `tests/jmeter/plans/ACCAC.jmx`;
+- `tests/jmeter/plans/ACCAC_DB_LIMITS.jmx`.
 
-CSV-данные для параметризации лежат в:
+CSV-данные лежат в:
 
-- `tests/jmeter/data/cmp_ids.csv`
-- `tests/jmeter/data/ant_ids.csv`
-
-Пример запуска основного JMeter-плана:
-
-```bash
-mkdir -p tests/jmeter/jmeter-results/accac
-
-jmeter \
-  -n \
-  -t tests/jmeter/plans/ACCAC.jmx \
-  -l tests/jmeter/jmeter-results/accac/result.jtl \
-  -j tests/jmeter/jmeter-results/accac/jmeter.log \
-  -e \
-  -o tests/jmeter/jmeter-results/accac/report
-```
+- `tests/jmeter/data/cmp_ids.csv`;
+- `tests/jmeter/data/ant_ids.csv`.
 
 Пример запуска сценария поиска предельной нагрузки:
 
@@ -182,4 +154,4 @@ jmeter \
 ./tests/jmeter/run_accac_db_limits.sh
 ```
 
-JMeter-отчёты и результаты не хранятся в Git и исключены через `.gitignore`.
+JMeter-отчёты и результаты не хранятся в Git.

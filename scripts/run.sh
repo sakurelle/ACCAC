@@ -27,7 +27,8 @@ if [ -z "$APP_FILE" ]; then
   echo "Expected one of:"
   echo "  $ROOT_DIR/accac"
   echo "  $ROOT_DIR/build/accac"
-  echo "For source installs, run ./scripts/build.sh first."
+  echo "For source mode, run: ./scripts/build.sh"
+  echo "For release mode, check that the archive contains ./accac."
   exit 1
 fi
 

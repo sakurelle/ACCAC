@@ -15,11 +15,13 @@ if ! command -v lazbuild >/dev/null 2>&1; then
   exit 1
 fi
 
+lazbuild --version || true
+
 mkdir -p "$ROOT_DIR/build"
 rm -f "$OUTPUT_FILE"
 
 cd "$ROOT_DIR"
-lazbuild -B "$PROJECT_FILE"
+lazbuild -B "$ROOT_DIR/src/accac.lpi"
 
 if [ ! -f "$OUTPUT_FILE" ]; then
   echo "ERROR: build finished without output binary: $OUTPUT_FILE"

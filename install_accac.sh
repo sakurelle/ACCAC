@@ -10,39 +10,35 @@ APP_DB_HOST="${APP_DB_HOST:-localhost}"
 APP_DB_PORT="${APP_DB_PORT:-5432}"
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
 
-DB_DIR="$ROOT_DIR/db/postgresql"
-DB_SCRIPT="$DB_DIR/run_all.sh"
-BUILD_SCRIPT="$ROOT_DIR/scripts/build.sh"
 PREBUILT_BINARY="$ROOT_DIR/accac"
-SOURCE_PROJECT="$ROOT_DIR/src/accac.lpi"
+PROJECT_FILE="$ROOT_DIR/src/accac.lpi"
+
+DB_SCRIPT="$ROOT_DIR/db/postgresql/run_all.sh"
+BUILD_SCRIPT="$ROOT_DIR/scripts/build.sh"
 CONFIG_FILE="$ROOT_DIR/accac.ini"
 CONFIG_EXAMPLE_CANDIDATES=(
   "$ROOT_DIR/config/accac.example.ini"
   "$ROOT_DIR/src/config/accac.example.ini"
 )
 
-MIN_POSTGRES_MAJOR=11
-MIN_SERVER_VERSION_NUM=110000
 APT_UPDATED=0
-
 PSQL="${PSQL:-$(command -v psql || true)}"
 CREATEDB_BIN="${CREATEDB_BIN:-$(command -v createdb || true)}"
 SUDO_BIN="${SUDO_BIN:-$(command -v sudo || true)}"
 RUNUSER_BIN="${RUNUSER_BIN:-$(command -v runuser || true)}"
-USE_LOCAL_POSTGRES_OS_USER=0
 
 log_section() {
   echo
   echo "=== $1 ==="
 }
 
-warn() {
-  echo "WARNING: $*" >&2
-}
-
 fail() {
   echo "ERROR: $*" >&2
   exit 1
+}
+
+warn() {
+  echo "WARNING: $*" >&2
 }
 
 sql_literal() {
@@ -56,71 +52,155 @@ sql_identifier() {
 run_with_privileges() {
   if [ "$(id -u)" -eq 0 ]; then
     "$@"
-    return 0
-  fi
-
-  if [ -n "$SUDO_BIN" ]; then
+  elif [ -n "$SUDO_BIN" ]; then
     "$SUDO_BIN" "$@"
-    return 0
+  else
+    fail "Administrative privileges are required. Re-run as root or install sudo."
   fi
-
-  fail "Administrative privileges are required to run: $*. Re-run as root or install sudo."
 }
 
-run_as_local_postgres() {
+run_as_postgres() {
   if [ "$(id -un)" = "$POSTGRES_USER" ]; then
     (cd /tmp && "$@")
-    return 0
-  fi
-
-  if [ -n "$SUDO_BIN" ]; then
+  elif [ -n "$SUDO_BIN" ]; then
     (cd /tmp && "$SUDO_BIN" -u "$POSTGRES_USER" "$@")
-    return 0
-  fi
-
-  if [ -n "$RUNUSER_BIN" ] && [ "$(id -u)" -eq 0 ]; then
+  elif [ -n "$RUNUSER_BIN" ] && [ "$(id -u)" -eq 0 ]; then
     (cd /tmp && "$RUNUSER_BIN" -u "$POSTGRES_USER" -- "$@")
-    return 0
+  else
+    fail "Unable to switch to PostgreSQL OS user $POSTGRES_USER. Install sudo or run as root."
   fi
-
-  fail "Unable to switch to the local PostgreSQL OS user $POSTGRES_USER. Re-run as root, install sudo, or use direct PostgreSQL authentication."
 }
 
 run_admin_psql() {
-  if [ "$USE_LOCAL_POSTGRES_OS_USER" -eq 1 ]; then
-    run_as_local_postgres "$PSQL" -v ON_ERROR_STOP=1 -p "$APP_DB_PORT" "$@"
+  if [ "$POSTGRES_USER" = "postgres" ] &&
+    { [ "$APP_DB_HOST" = "localhost" ] || [ -z "$APP_DB_HOST" ]; }; then
+    run_as_postgres "$PSQL" -v ON_ERROR_STOP=1 -p "$APP_DB_PORT" "$@"
   else
     "$PSQL" -h "$APP_DB_HOST" -p "$APP_DB_PORT" -U "$POSTGRES_USER" -v ON_ERROR_STOP=1 "$@"
   fi
 }
 
 run_admin_createdb() {
-  if [ "$USE_LOCAL_POSTGRES_OS_USER" -eq 1 ]; then
-    run_as_local_postgres "$CREATEDB_BIN" -p "$APP_DB_PORT" -O "$APP_DB_USER" "$APP_DB_NAME"
+  if [ "$POSTGRES_USER" = "postgres" ] &&
+    { [ "$APP_DB_HOST" = "localhost" ] || [ -z "$APP_DB_HOST" ]; }; then
+    run_as_postgres "$CREATEDB_BIN" -p "$APP_DB_PORT" -O "$APP_DB_USER" "$APP_DB_NAME"
   else
     "$CREATEDB_BIN" -h "$APP_DB_HOST" -p "$APP_DB_PORT" -U "$POSTGRES_USER" -O "$APP_DB_USER" "$APP_DB_NAME"
   fi
 }
 
-extract_major_from_text() {
-  printf '%s\n' "$1" | sed -n 's/.* \([0-9][0-9]*\)\(\..*\)\{0,1\}.*/\1/p' | head -n1
+apt_update_once() {
+  if [ "$APT_UPDATED" -eq 0 ]; then
+    if ! command -v apt-get >/dev/null 2>&1; then
+      fail "apt-get is not available. Configure packages manually for Astra Linux."
+    fi
+    run_with_privileges apt-get update
+    APT_UPDATED=1
+  fi
+}
+
+package_available() {
+  local package="$1"
+  apt-cache policy "$package" 2>/dev/null | awk '/Candidate:/ { print $2 }' | grep -vq "(none)"
+}
+
+postgres_package_error() {
+  cat >&2 <<'EOF'
+ERROR: PostgreSQL 11, 12 or 13 package was not found in configured APT repositories.
+
+Checked packages:
+  - postgresql-13
+  - postgresql-12
+  - postgresql-11
+
+For Astra Linux 1.7:
+  sudo apt update
+  sudo apt install -y postgresql-11 postgresql-client libpq5 libgtk2.0-0
+
+For Astra Linux 1.8:
+  first check available packages:
+    apt-cache policy postgresql-13
+    apt-cache policy postgresql-12
+    apt-cache policy postgresql-11
+
+  install one of allowed versions only:
+    sudo apt install -y postgresql-13 postgresql-client libpq5 libgtk2.0-0
+  or:
+    sudo apt install -y postgresql-12 postgresql-client libpq5 libgtk2.0-0
+  or:
+    sudo apt install -y postgresql-11 postgresql-client libpq5 libgtk2.0-0
+
+Do not install PostgreSQL 14, 15 or newer.
+
+For Astra Linux 1.7, configure official Astra 1.7 repositories, then run:
+  sudo apt update
+  sudo apt install -y postgresql-11 postgresql-client libpq5 libgtk2.0-0
+
+For Astra Linux 1.8, configure official Astra 1.8 repositories, then check allowed packages:
+  apt-cache policy postgresql-13
+  apt-cache policy postgresql-12
+  apt-cache policy postgresql-11
+
+Repository configuration must be performed by the OS user or administrator.
+EOF
+  exit 1
+}
+
+select_postgresql_server_package() {
+  local target="${POSTGRES_TARGET_MAJOR:-}"
+  local major
+
+  if [ -n "$target" ]; then
+    case "$target" in
+      11|12|13)
+        if package_available "postgresql-$target"; then
+          printf 'postgresql-%s\n' "$target"
+          return 0
+        fi
+        postgres_package_error
+        ;;
+      *)
+        fail "POSTGRES_TARGET_MAJOR must be 11, 12 or 13."
+        ;;
+    esac
+  fi
+
+  for major in 13 12 11; do
+    if package_available "postgresql-$major"; then
+      printf 'postgresql-%s\n' "$major"
+      return 0
+    fi
+  done
+
+  postgres_package_error
+}
+
+apt_install_required() {
+  local package
+  local -a missing=()
+
+  apt_update_once
+  for package in "$@"; do
+    if ! package_available "$package"; then
+      missing+=("$package")
+    fi
+  done
+
+  if [ "${#missing[@]}" -gt 0 ]; then
+    printf 'ERROR: required APT package is not available: %s\n' "${missing[0]}" >&2
+    echo "Check configured official Astra Linux repositories." >&2
+    exit 1
+  fi
+
+  run_with_privileges apt-get install -y "$@"
 }
 
 find_postgres_binary() {
-  local bindir
   local candidate
 
   if command -v postgres >/dev/null 2>&1; then
     command -v postgres
     return 0
-  fi
-
-  if command -v pg_config >/dev/null 2>&1; then
-    bindir="$(pg_config --bindir 2>/dev/null || true)"
-    if [ -n "$bindir" ] && [ -x "$bindir/postgres" ]; then
-      printf '%s\n' "$bindir/postgres"
-      return 0
-    fi
   fi
 
   candidate="$(compgen -G '/usr/lib/postgresql/*/bin/postgres' 2>/dev/null | sort -V | tail -n1)"
@@ -132,202 +212,92 @@ find_postgres_binary() {
   return 1
 }
 
-detect_installed_pg_major() {
-  local postgres_binary
-  local version_text
-  local major
-
-  if postgres_binary="$(find_postgres_binary 2>/dev/null || true)"; then
-    if [ -n "$postgres_binary" ]; then
-      version_text="$("$postgres_binary" --version 2>/dev/null || true)"
-      major="$(extract_major_from_text "$version_text" || true)"
-      if [ -n "$major" ]; then
-        printf '%s\n' "$major"
-        return 0
-      fi
-    fi
-  fi
-
-  if command -v pg_config >/dev/null 2>&1; then
-    version_text="$(pg_config --version 2>/dev/null || true)"
-    major="$(extract_major_from_text "$version_text" || true)"
-    if [ -n "$major" ]; then
-      printf '%s\n' "$major"
-      return 0
-    fi
-  fi
-
-  if command -v psql >/dev/null 2>&1; then
-    version_text="$(psql --version 2>/dev/null || true)"
-    major="$(extract_major_from_text "$version_text" || true)"
-    if [ -n "$major" ]; then
-      printf '%s\n' "$major"
-      return 0
-    fi
-  fi
-
-  return 1
-}
-
-apt_update_once() {
-  if [ "$APT_UPDATED" -eq 0 ]; then
-    run_with_privileges apt-get update
-    APT_UPDATED=1
-  fi
-}
-
-package_available() {
-  local package="$1"
-
-  if ! command -v apt-cache >/dev/null 2>&1; then
-    return 1
-  fi
-
-  apt-cache policy "$package" 2>/dev/null | awk '/Candidate:/ && $2 != "(none)" { found = 1 } END { exit(found ? 0 : 1) }'
-}
-
-apt_install_packages() {
-  if ! command -v apt-get >/dev/null 2>&1; then
-    fail "apt-get is not available. Install the required packages manually and rerun install_accac.sh."
-  fi
-
-  apt_update_once
-  run_with_privileges apt-get install -y "$@"
-}
-
-select_postgresql_server_package() {
-  if package_available "postgresql-11"; then
-    printf '%s\n' "postgresql-11"
-    return 0
-  fi
-
-  if package_available "postgresql-13"; then
-    printf '%s\n' "postgresql-13"
-    return 0
-  fi
-
-  if package_available "postgresql"; then
-    printf '%s\n' "postgresql"
-    return 0
-  fi
-
-  fail "No compatible PostgreSQL server package was found in the configured system repositories."
-}
-
-ensure_postgresql_available() {
-  local installed_major=""
-  local server_package=""
-  local -a packages_to_install=()
-
-  if find_postgres_binary >/dev/null 2>&1; then
-    installed_major="$(detect_installed_pg_major 2>/dev/null || true)"
-    if [ -z "$installed_major" ]; then
-      fail "PostgreSQL appears to be installed, but its major version could not be determined."
-    fi
-
-    if [ "$installed_major" -lt "$MIN_POSTGRES_MAJOR" ]; then
-      fail "ACCAC requires PostgreSQL 11 or newer. Found PostgreSQL $installed_major."
-    fi
-
-    echo "Using installed PostgreSQL major version: $installed_major"
-  else
-    log_section "Installing PostgreSQL"
-    server_package="$(select_postgresql_server_package)"
-    packages_to_install=("$server_package")
-
-    if package_available "postgresql-client"; then
-      packages_to_install+=("postgresql-client")
-    fi
-
-    apt_install_packages "${packages_to_install[@]}"
-  fi
-
+install_runtime_dependencies() {
+  apt_install_required postgresql-client libpq5 libgtk2.0-0
   PSQL="${PSQL:-$(command -v psql || true)}"
   CREATEDB_BIN="${CREATEDB_BIN:-$(command -v createdb || true)}"
-
-  if [ -z "$PSQL" ] || [ -z "$CREATEDB_BIN" ]; then
-    apt_install_packages postgresql-client
-    PSQL="${PSQL:-$(command -v psql || true)}"
-    CREATEDB_BIN="${CREATEDB_BIN:-$(command -v createdb || true)}"
-  fi
-
-  if [ -z "$PSQL" ]; then
-    fail "psql command not found after installing PostgreSQL packages."
-  fi
-
-  if [ -z "$CREATEDB_BIN" ]; then
-    fail "createdb command not found after installing PostgreSQL packages."
-  fi
 }
 
-ensure_lazarus_available() {
-  if command -v lazbuild >/dev/null 2>&1 && command -v fpc >/dev/null 2>&1; then
+install_postgresql_server_if_needed() {
+  local server_package
+
+  if find_postgres_binary >/dev/null 2>&1; then
     return 0
   fi
 
-  log_section "Installing Lazarus build dependencies"
-  apt_install_packages lazarus fpc fpc-source fp-units-db libpq-dev libgtk2.0-dev
+  log_section "Installing PostgreSQL server"
+  apt_update_once
+  server_package="$(select_postgresql_server_package)"
+  run_with_privileges apt-get install -y "$server_package"
 }
 
 start_postgresql_service() {
   log_section "Starting PostgreSQL"
 
   if command -v systemctl >/dev/null 2>&1; then
-    if run_with_privileges systemctl enable --now postgresql; then
-      return 0
-    fi
-    warn "systemctl could not start the postgresql service."
+    run_with_privileges systemctl enable postgresql || true
+    run_with_privileges systemctl start postgresql || true
+  elif command -v service >/dev/null 2>&1; then
+    run_with_privileges service postgresql start || true
   fi
-
-  if command -v service >/dev/null 2>&1; then
-    if run_with_privileges service postgresql start; then
-      return 0
-    fi
-    warn "service could not start PostgreSQL."
-  fi
-
-  warn "PostgreSQL was not started automatically. Make sure the service is running before continuing."
 }
 
-query_server_version_num() {
-  run_admin_psql -d postgres -tAc "SHOW server_version_num;" 2>/dev/null | tr -d '[:space:]'
+get_postgres_server_version_num() {
+  run_as_postgres "$PSQL" -d postgres -tAc "SHOW server_version_num;" 2>/dev/null | tr -d '[:space:]' || true
 }
 
-ensure_supported_server_version() {
-  local server_version_num
+check_postgresql_server_available() {
+  if ! run_as_postgres "$PSQL" -d postgres -tAc "SELECT 1;" >/dev/null 2>&1; then
+    fail "PostgreSQL server is not available. Start PostgreSQL and rerun install_accac.sh."
+  fi
+}
 
-  server_version_num="$(query_server_version_num)"
-  if ! [[ "$server_version_num" =~ ^[0-9]+$ ]]; then
-    fail "Unable to determine the PostgreSQL server version."
+check_supported_postgresql_version() {
+  local version_num
+
+  version_num="$(get_postgres_server_version_num)"
+  if ! [[ "$version_num" =~ ^[0-9]+$ ]]; then
+    fail "Unable to determine PostgreSQL server version."
   fi
 
-  if [ "$server_version_num" -lt "$MIN_SERVER_VERSION_NUM" ]; then
-    fail "ACCAC requires PostgreSQL 11 or newer. Detected server_version_num=$server_version_num."
+  if [ "$version_num" -lt 110000 ] || [ "$version_num" -ge 140000 ]; then
+    cat >&2 <<'EOF'
+ERROR: unsupported PostgreSQL version.
+ACCAC supports PostgreSQL 11, 12 and 13 only.
+EOF
+    exit 1
   fi
 
-  echo "PostgreSQL server version is compatible: $((server_version_num / 10000)) (server_version_num=$server_version_num)"
+  echo "PostgreSQL server version is supported: $version_num"
 }
 
-query_role_exists() {
-  local escaped_user_literal
+ensure_postgresql() {
+  install_runtime_dependencies
+  install_postgresql_server_if_needed
+  PSQL="${PSQL:-$(command -v psql || true)}"
+  CREATEDB_BIN="${CREATEDB_BIN:-$(command -v createdb || true)}"
 
-  escaped_user_literal="$(sql_literal "$APP_DB_USER")"
-  run_admin_psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '$escaped_user_literal';" | tr -d '[:space:]'
-}
+  if [ -z "$PSQL" ]; then
+    fail "psql command not found after installing postgresql-client."
+  fi
 
-query_database_exists() {
-  local escaped_db_literal
+  if [ -z "$CREATEDB_BIN" ]; then
+    fail "createdb command not found after installing postgresql-client."
+  fi
 
-  escaped_db_literal="$(sql_literal "$APP_DB_NAME")"
-  run_admin_psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$escaped_db_literal';" | tr -d '[:space:]'
+  start_postgresql_service
+  check_postgresql_server_available
+  check_supported_postgresql_version
 }
 
 ensure_role() {
-  local role_exists
+  local escaped_user_literal
   local escaped_user_ident
   local escaped_password_literal
+  local role_exists
 
-  role_exists="$(query_role_exists)"
+  escaped_user_literal="$(sql_literal "$APP_DB_USER")"
+  role_exists="$(run_admin_psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '$escaped_user_literal';" | tr -d '[:space:]')"
   escaped_user_ident="$(sql_identifier "$APP_DB_USER")"
   escaped_password_literal="$(sql_literal "$APP_DB_PASSWORD")"
 
@@ -345,9 +315,12 @@ ensure_role() {
 }
 
 ensure_database() {
+  local escaped_db_literal
   local db_exists
 
-  db_exists="$(query_database_exists)"
+  escaped_db_literal="$(sql_literal "$APP_DB_NAME")"
+  db_exists="$(run_admin_psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$escaped_db_literal';" | tr -d '[:space:]')"
+
   if [ "$db_exists" = "1" ]; then
     echo "Database $APP_DB_NAME already exists."
     return 0
@@ -415,7 +388,50 @@ prepare_config() {
   echo "Created: $CONFIG_FILE"
 }
 
-build_or_use_binary() {
+check_prebuilt_runtime_libraries() {
+  local ldd_output
+  local missing
+
+  if [ ! -f "$PREBUILT_BINARY" ]; then
+    return 0
+  fi
+
+  if ! command -v ldd >/dev/null 2>&1; then
+    warn "ldd command not found; runtime library check was skipped."
+    return 0
+  fi
+
+  ldd_output="$(ldd "$PREBUILT_BINARY" 2>&1 || true)"
+  missing="$(printf '%s\n' "$ldd_output" | grep 'not found' || true)"
+
+  if [ -n "$missing" ]; then
+    echo "ERROR: missing runtime libraries for ./accac" >&2
+    printf '%s\n' "$missing" >&2
+    echo "Recommended command:" >&2
+    echo "  sudo apt install -y postgresql-client libpq5 libgtk2.0-0" >&2
+    exit 1
+  fi
+}
+
+print_build_tool_versions() {
+  local lazbuild_version=""
+  local fpc_version=""
+
+  lazbuild_version="$(lazbuild --version 2>/dev/null | head -n1 || true)"
+  fpc_version="$(fpc -iV 2>/dev/null || true)"
+  echo "lazbuild: ${lazbuild_version:-unknown}"
+  echo "fpc: ${fpc_version:-unknown}"
+
+  if ! printf '%s\n' "$lazbuild_version" | grep -q '2\.2\.0'; then
+    warn "Target Lazarus version is 2.2.0; installed version may differ."
+  fi
+
+  if [ "$fpc_version" != "3.2.2" ]; then
+    warn "Target Free Pascal version is 3.2.2; installed version may differ."
+  fi
+}
+
+prepare_application_binary() {
   if [ -f "$PREBUILT_BINARY" ]; then
     chmod +x "$PREBUILT_BINARY" 2>/dev/null || true
     echo "Prebuilt binary found: ./accac"
@@ -423,22 +439,25 @@ build_or_use_binary() {
     return 0
   fi
 
-  if [ ! -f "$SOURCE_PROJECT" ]; then
-    fail "Prebuilt binary ./accac was not found, and source project is missing: $SOURCE_PROJECT"
+  if [ ! -f "$PROJECT_FILE" ]; then
+    fail "neither prebuilt binary nor Lazarus project file was found."
   fi
 
-  if [ ! -x "$BUILD_SCRIPT" ]; then
-    chmod +x "$BUILD_SCRIPT" 2>/dev/null || true
+  if ! command -v lazbuild >/dev/null 2>&1; then
+    fail "lazbuild command not found. Install Lazarus 2.2.0 and Free Pascal 3.2.2, or use the release archive with ./accac."
   fi
 
-  ensure_lazarus_available
+  if ! command -v fpc >/dev/null 2>&1; then
+    fail "fpc command not found. Install Free Pascal 3.2.2."
+  fi
+
+  print_build_tool_versions
+  chmod +x "$BUILD_SCRIPT" 2>/dev/null || true
   "$BUILD_SCRIPT"
 }
 
-if [ "$POSTGRES_USER" = "postgres" ] &&
-  [ "$(id -un)" != "$POSTGRES_USER" ] &&
-  { [ "$APP_DB_HOST" = "localhost" ] || [ -z "$APP_DB_HOST" ]; }; then
-  USE_LOCAL_POSTGRES_OS_USER=1
+if [ ! -f "$PREBUILT_BINARY" ] && [ ! -f "$PROJECT_FILE" ]; then
+  fail "neither prebuilt binary nor Lazarus project file was found."
 fi
 
 if [ ! -f "$DB_SCRIPT" ]; then
@@ -447,13 +466,13 @@ fi
 
 chmod +x "$ROOT_DIR"/scripts/*.sh 2>/dev/null || true
 chmod +x "$DB_SCRIPT" 2>/dev/null || true
-chmod +x "$ROOT_DIR/tests/jmeter/run_accac_db_limits.sh" 2>/dev/null || true
 
-ensure_postgresql_available
-start_postgresql_service || true
+log_section "Preparing application binary"
+prepare_application_binary
 
-log_section "Checking PostgreSQL server version"
-ensure_supported_server_version
+log_section "Preparing PostgreSQL"
+ensure_postgresql
+check_prebuilt_runtime_libraries
 
 log_section "Preparing PostgreSQL role and database"
 ensure_role
@@ -464,16 +483,13 @@ APP_DB_NAME="$APP_DB_NAME" \
 APP_DB_HOST="$APP_DB_HOST" \
 APP_DB_PORT="$APP_DB_PORT" \
 APP_DB_USER="$APP_DB_USER" \
-APP_DB_PASSWORD="$APP_DB_PASSWORD" \
 POSTGRES_USER="$POSTGRES_USER" \
 PSQL="$PSQL" \
+CREATEDB_BIN="$CREATEDB_BIN" \
 "$DB_SCRIPT"
 
 log_section "Preparing local configuration"
 prepare_config
-
-log_section "Preparing application binary"
-build_or_use_binary
 
 log_section "Installation complete"
 echo "Configuration file: $CONFIG_FILE"
