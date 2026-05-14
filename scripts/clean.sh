@@ -4,9 +4,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 rm -f \
-  "$ROOT_DIR/project1" \
-  "$ROOT_DIR/src/project1" \
-  "$ROOT_DIR/build/project1" \
   "$ROOT_DIR/accac" \
   "$ROOT_DIR/src/accac" \
   "$ROOT_DIR/build/accac"

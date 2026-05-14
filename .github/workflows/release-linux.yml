@@ -1,13 +1,15 @@
-name: Build Linux ACCAC
+name: Release Linux ACCAC
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
-  pull_request:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-22.04
 
     steps:
@@ -37,27 +39,23 @@ jobs:
         run: |
           bash scripts/build.sh
 
-      - name: Check build result
+      - name: Prepare release package
         run: |
-          test -f build/accac
-          chmod +x build/accac
-          ls -lh build/accac
-          file build/accac
-
-      - name: Prepare package
-        run: |
+          rm -rf package
           mkdir -p package/accac
-          cp -r build/accac package/accac/
-          cp -r db package/accac/
-          cp -r src/config package/accac/config
-          cp -r scripts package/accac/
-          cp install_accac.sh package/accac/
+          cp build/accac package/accac/accac
           cp README.md package/accac/
+          cp install_accac.sh package/accac/
+          cp -r scripts package/accac/scripts
+          cp -r db package/accac/db
+          mkdir -p package/accac/config
+          cp src/config/accac.example.ini package/accac/config/accac.example.ini
+          chmod +x package/accac/accac
+          chmod +x package/accac/install_accac.sh
+          chmod +x package/accac/scripts/*.sh || true
           tar -czf accac-linux-astra.tar.gz -C package accac
 
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
         with:
-          name: accac-linux-astra
-          path: accac-linux-astra.tar.gz
-          if-no-files-found: error
+          files: accac-linux-astra.tar.gz

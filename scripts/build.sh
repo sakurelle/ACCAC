@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PROJECT_DIR="$ROOT_DIR/src"
-PROJECT_FILE="$PROJECT_DIR/accac.lpi"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_FILE="$ROOT_DIR/src/accac.lpi"
 OUTPUT_FILE="$ROOT_DIR/build/accac"
 
 if [ ! -f "$PROJECT_FILE" ]; then

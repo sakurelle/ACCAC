@@ -9,12 +9,7 @@ lib/
 backup/
 
 # Build artifacts
-/build/
-project1
-src/project1
-accac
-src/accac
-build/
+build/lib/
 *.tar.gz
 *.zip
 
