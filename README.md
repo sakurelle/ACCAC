@@ -27,10 +27,9 @@ tar -xzf accac-linux-astra.tar.gz
 cd accac
 chmod +x accac install_accac.sh scripts/*.sh db/postgresql/run_all.sh
 ./install_accac.sh
-./accac
 ```
 
-Ручные SQL-команды не нужны. Установщик сам создаёт роль `accac_user`, создаёт базу `accac`, применяет миграции и создаёт `accac.ini`. Может потребоваться ввод sudo-пароля ОС. Lazarus и Free Pascal для release-архива не требуются.
+Ручные SQL-команды не нужны. Установщик сам создаёт роль `accac_user`, создаёт базу `accac`, применяет миграции, создаёт `accac.ini` и по завершении автоматически запускает `./accac`. Может потребоваться ввод sudo-пароля ОС. Lazarus и Free Pascal для release-архива не требуются.
 
 Если установщик сообщает, что PostgreSQL 11, 12 или 13 не найден в репозиториях, нужно подключить системные репозитории Astra Linux. Установщик не подключает репозитории автоматически, потому что это системная настройка ОС.
 
@@ -66,7 +65,14 @@ git clone https://github.com/sakurelle/ACCAC.git
 cd ACCAC
 chmod +x install_accac.sh scripts/*.sh db/postgresql/run_all.sh tests/jmeter/run_accac_db_limits.sh
 ./install_accac.sh
-./scripts/run.sh
+```
+
+При установке из исходников `install_accac.sh` собирает Lazarus-проект, публикует бинарник как `./accac` и затем автоматически запускает его.
+
+Для повторного запуска после установки используйте:
+
+```bash
+./accac
 ```
 
 ## Настройка конфигурации

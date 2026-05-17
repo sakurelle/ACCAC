@@ -11,6 +11,7 @@ APP_DB_PORT="${APP_DB_PORT:-5432}"
 POSTGRES_TARGET_MAJOR="${POSTGRES_TARGET_MAJOR:-}"
 
 PREBUILT_BINARY="$ROOT_DIR/accac"
+BUILD_OUTPUT="$ROOT_DIR/build/accac"
 PROJECT_FILE="$ROOT_DIR/src/accac.lpi"
 CONFIG_FILE="$ROOT_DIR/accac.ini"
 
@@ -613,8 +614,32 @@ For source build install Lazarus 2.2.0 and Free Pascal 3.2.2."
   fi
 }
 
+publish_built_binary() {
+  if [ ! -f "$BUILD_OUTPUT" ]; then
+    die "source build finished without binary: $BUILD_OUTPUT"
+  fi
+
+  cp "$BUILD_OUTPUT" "$PREBUILT_BINARY"
+  chmod +x "$PREBUILT_BINARY"
+  echo "Prepared launch binary: ./accac"
+}
+
 prepare_application_binary() {
   log "Preparing application binary"
+
+  if [ -f "$PROJECT_FILE" ]; then
+    echo "Source mode detected."
+
+    check_lazarus_version_for_source_mode
+
+    if [ ! -x "$ROOT_DIR/scripts/build.sh" ]; then
+      chmod +x "$ROOT_DIR/scripts/build.sh"
+    fi
+
+    bash "$ROOT_DIR/scripts/build.sh"
+    publish_built_binary
+    return 0
+  fi
 
   if [ -f "$PREBUILT_BINARY" ]; then
     chmod +x "$PREBUILT_BINARY"
@@ -626,16 +651,19 @@ prepare_application_binary() {
   if [ ! -f "$PROJECT_FILE" ]; then
     die "neither prebuilt binary nor Lazarus project file was found."
   fi
+}
 
-  echo "Source mode detected."
+launch_application() {
+  log "Launching ACCAC"
 
-  check_lazarus_version_for_source_mode
-
-  if [ ! -x "$ROOT_DIR/scripts/build.sh" ]; then
-    chmod +x "$ROOT_DIR/scripts/build.sh"
+  if [ ! -f "$PREBUILT_BINARY" ]; then
+    die "launch binary was not found: $PREBUILT_BINARY"
   fi
 
-  bash "$ROOT_DIR/scripts/build.sh"
+  chmod +x "$PREBUILT_BINARY"
+  echo "Starting ./accac"
+  cd "$ROOT_DIR"
+  exec "./accac"
 }
 
 main() {
@@ -651,9 +679,7 @@ main() {
   check_binary_runtime_libraries
 
   log "Installation completed"
-
-  echo "Run application:"
-  echo "  ./accac"
+  launch_application
 }
 
 main "$@"
