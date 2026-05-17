@@ -39,9 +39,22 @@ const
   STAT_COL_NAME  = 1;
   STAT_COL_COLOR = 2;
 
+function IsStatGridCellValid(AGrid: TStringGrid; ACol, ARow: Integer): Boolean;
+begin
+  Result :=
+    Assigned(AGrid) and
+    (ACol >= 0) and
+    (ACol < AGrid.ColCount) and
+    (ARow > 0) and
+    (ARow < AGrid.RowCount);
+end;
+
 function GetSelectedStatId(AGrid: TStringGrid): Integer;
 begin
-  if (AGrid = nil) or (AGrid.Row <= 0) then
+  if AGrid = nil then
+    raise Exception.Create('Выберите запись в таблице');
+
+  if not IsStatGridCellValid(AGrid, STAT_COL_ID, AGrid.Row) then
     raise Exception.Create('Выберите запись в таблице');
 
   if Trim(AGrid.Cells[STAT_COL_ID, AGrid.Row]) = '' then
@@ -103,10 +116,13 @@ end;
 
 procedure SelectStatRow(AGrid: TStringGrid; ARow: Integer; AEditName, AEditColor: TEdit);
 begin
-  if ARow <= 0 then Exit;
+  if not IsStatGridCellValid(AGrid, STAT_COL_COLOR, ARow) then
+    Exit;
 
-  AEditName.Text := AGrid.Cells[STAT_COL_NAME, ARow];
-  AEditColor.Text := AGrid.Cells[STAT_COL_COLOR, ARow];
+  if Assigned(AEditName) then
+    AEditName.Text := AGrid.Cells[STAT_COL_NAME, ARow];
+  if Assigned(AEditColor) then
+    AEditColor.Text := AGrid.Cells[STAT_COL_COLOR, ARow];
 end;
 
 procedure AddStat(AQuery: TSQLQuery; ATransaction: TSQLTransaction; AGrid: TStringGrid;

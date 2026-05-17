@@ -53,6 +53,16 @@ const
   ANT_COL_STAT  = 3;
   ANT_COL_NOTE  = 4;
 
+function IsAntGridCellValid(AGrid: TStringGrid; ACol, ARow: Integer): Boolean;
+begin
+  Result :=
+    Assigned(AGrid) and
+    (ACol >= 0) and
+    (ACol < AGrid.ColCount) and
+    (ARow > 0) and
+    (ARow < AGrid.RowCount);
+end;
+
 function GetComboSelectedId(ACombo: TComboBox): Integer;
 begin
   if (ACombo = nil) or (ACombo.ItemIndex < 0) then
@@ -78,7 +88,10 @@ end;
 
 function GetSelectedAntId(AGrid: TStringGrid): Integer;
 begin
-  if (AGrid = nil) or (AGrid.Row <= 0) then
+  if AGrid = nil then
+    raise Exception.Create('Выберите запись в таблице');
+
+  if not IsAntGridCellValid(AGrid, ANT_COL_ID, AGrid.Row) then
     raise Exception.Create('Выберите запись в таблице');
 
   if Trim(AGrid.Cells[ANT_COL_ID, AGrid.Row]) = '' then
@@ -221,9 +234,11 @@ end;
 procedure SelectAntRow(AGrid: TStringGrid; ARow: Integer; AEditNote: TEdit;
   AComboMdl, AComboCity, AComboStat: TComboBox);
 begin
-  if ARow <= 0 then Exit;
+  if not IsAntGridCellValid(AGrid, ANT_COL_NOTE, ARow) then
+    Exit;
 
-  AEditNote.Text := AGrid.Cells[ANT_COL_NOTE, ARow];
+  if Assigned(AEditNote) then
+    AEditNote.Text := AGrid.Cells[ANT_COL_NOTE, ARow];
 
   SelectComboByText(AComboMdl,  AGrid.Cells[ANT_COL_MDL, ARow]);
   SelectComboByText(AComboCity, AGrid.Cells[ANT_COL_CITY, ARow]);

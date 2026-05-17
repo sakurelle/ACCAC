@@ -66,6 +66,16 @@ const
   CMP_COL_CTR_ID    = 10;
   CMP_COL_LYT_ID    = 11;
 
+function IsCmpGridCellValid(AGrid: TStringGrid; ACol, ARow: Integer): Boolean;
+begin
+  Result :=
+    Assigned(AGrid) and
+    (ACol >= 0) and
+    (ACol < AGrid.ColCount) and
+    (ARow > 0) and
+    (ARow < AGrid.RowCount);
+end;
+
 function GetComboObjectId(ACombo: TComboBox): Integer;
 begin
   if (ACombo = nil) or (ACombo.ItemIndex < 0) then
@@ -158,7 +168,10 @@ end;
 
 function GetSelectedCmpId(AGrid: TStringGrid): Integer;
 begin
-  if (AGrid = nil) or (AGrid.Row <= 0) then
+  if AGrid = nil then
+    raise Exception.Create('Выберите запись в таблице');
+
+  if not IsCmpGridCellValid(AGrid, CMP_COL_ID, AGrid.Row) then
     raise Exception.Create('Выберите запись в таблице');
 
   if Trim(AGrid.Cells[CMP_COL_ID, AGrid.Row]) = '' then
@@ -373,19 +386,26 @@ procedure SelectCmpRow(AGrid: TStringGrid; ARow: Integer;
   AEditX, AEditY, AEditWidth, AEditHeight, AEditText: TEdit;
   AComboAnt, AComboLyt, AComboType: TComboBox; ACheckVisible: TCheckBox);
 begin
-  if ARow <= 0 then Exit;
+  if not IsCmpGridCellValid(AGrid, CMP_COL_LYT_ID, ARow) then
+    Exit;
 
-  AEditX.Text      := AGrid.Cells[CMP_COL_X, ARow];
-  AEditY.Text      := AGrid.Cells[CMP_COL_Y, ARow];
-  AEditWidth.Text  := AGrid.Cells[CMP_COL_WIDTH, ARow];
-  AEditHeight.Text := AGrid.Cells[CMP_COL_HEIGHT, ARow];
-  AEditText.Text   := AGrid.Cells[CMP_COL_TEXT, ARow];
+  if Assigned(AEditX) then
+    AEditX.Text := AGrid.Cells[CMP_COL_X, ARow];
+  if Assigned(AEditY) then
+    AEditY.Text := AGrid.Cells[CMP_COL_Y, ARow];
+  if Assigned(AEditWidth) then
+    AEditWidth.Text := AGrid.Cells[CMP_COL_WIDTH, ARow];
+  if Assigned(AEditHeight) then
+    AEditHeight.Text := AGrid.Cells[CMP_COL_HEIGHT, ARow];
+  if Assigned(AEditText) then
+    AEditText.Text := AGrid.Cells[CMP_COL_TEXT, ARow];
 
   SelectComboByText(AComboType, AGrid.Cells[CMP_COL_TYPE, ARow]);
   SelectComboById(AComboAnt, AGrid.Cells[CMP_COL_ANT_ID, ARow]);
   SelectComboById(AComboLyt, AGrid.Cells[CMP_COL_LYT_ID, ARow]);
 
-  ACheckVisible.Checked := SameText(AGrid.Cells[CMP_COL_VISIBLE, ARow], 'TRUE');
+  if Assigned(ACheckVisible) then
+    ACheckVisible.Checked := SameText(AGrid.Cells[CMP_COL_VISIBLE, ARow], 'TRUE');
 end;
 
 procedure AddCmp(AQuery: TSQLQuery; ATransaction: TSQLTransaction; AGrid: TStringGrid;
@@ -488,6 +508,12 @@ begin
   end
   else
   begin
+    if AGrid = nil then
+      raise Exception.Create('Выберите запись в таблице');
+
+    if not IsCmpGridCellValid(AGrid, CMP_COL_CTR_ID, AGrid.Row) then
+      raise Exception.Create('Выберите запись в таблице');
+
     if Trim(AGrid.Cells[CMP_COL_CITY_ID, AGrid.Row]) = '' then
       CityId := Null
     else

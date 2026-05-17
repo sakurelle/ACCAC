@@ -46,6 +46,16 @@ const
   MDL_COL_WIDTH  = 3;
   MDL_COL_HEIGHT = 4;
 
+function IsMdlGridCellValid(AGrid: TStringGrid; ACol, ARow: Integer): Boolean;
+begin
+  Result :=
+    Assigned(AGrid) and
+    (ACol >= 0) and
+    (ACol < AGrid.ColCount) and
+    (ARow > 0) and
+    (ARow < AGrid.RowCount);
+end;
+
 procedure SetupMdlGrid(AGrid: TStringGrid);
 begin
   AGrid.ColCount := 5;
@@ -98,12 +108,17 @@ end;
 procedure SelectMdlRow(AGrid: TStringGrid; ARow: Integer;
   AEditName, AEditType, AEditWidth, AEditHeight: TEdit);
 begin
-  if ARow <= 0 then Exit;
+  if not IsMdlGridCellValid(AGrid, MDL_COL_HEIGHT, ARow) then
+    Exit;
 
-  AEditName.Text   := AGrid.Cells[MDL_COL_NAME, ARow];
-  AEditType.Text   := AGrid.Cells[MDL_COL_TYPE, ARow];
-  AEditWidth.Text  := AGrid.Cells[MDL_COL_WIDTH, ARow];
-  AEditHeight.Text := AGrid.Cells[MDL_COL_HEIGHT, ARow];
+  if Assigned(AEditName) then
+    AEditName.Text := AGrid.Cells[MDL_COL_NAME, ARow];
+  if Assigned(AEditType) then
+    AEditType.Text := AGrid.Cells[MDL_COL_TYPE, ARow];
+  if Assigned(AEditWidth) then
+    AEditWidth.Text := AGrid.Cells[MDL_COL_WIDTH, ARow];
+  if Assigned(AEditHeight) then
+    AEditHeight.Text := AGrid.Cells[MDL_COL_HEIGHT, ARow];
 end;
 
 procedure ClearMdlEdits(
@@ -141,7 +156,10 @@ end;
 
 function GetSelectedMdlId(AGrid: TStringGrid): Integer;
 begin
-  if (AGrid = nil) or (AGrid.Row <= 0) then
+  if AGrid = nil then
+    raise Exception.Create('Выберите запись в таблице');
+
+  if not IsMdlGridCellValid(AGrid, MDL_COL_ID, AGrid.Row) then
     raise Exception.Create('Выберите запись в таблице');
 
   if Trim(AGrid.Cells[MDL_COL_ID, AGrid.Row]) = '' then

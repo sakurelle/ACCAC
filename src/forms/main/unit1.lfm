@@ -12,7 +12,6 @@ object FormMain: TFormMain
     Database = PQConnection1
     Transaction = SQLTransaction1
     Params = <>
-    Macros = <>
     Left = 48
     Top = 16
   end

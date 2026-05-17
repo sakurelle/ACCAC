@@ -171,6 +171,7 @@ type
     procedure LoadAllCombos;
     procedure ClearModelImageSelection;
     procedure RefreshCmpTab;
+    function IsSelectableGridCell(AGrid: TStringGrid; ACol, ARow: Integer): Boolean;
     function GetSelectedGridId(AGrid: TStringGrid): Integer;
   public
     property IsReady: Boolean read FInitialized;
@@ -200,9 +201,22 @@ begin
   Edit24.Clear;
 end;
 
+function TFormEditor.IsSelectableGridCell(AGrid: TStringGrid; ACol, ARow: Integer): Boolean;
+begin
+  Result :=
+    Assigned(AGrid) and
+    (ACol >= 0) and
+    (ACol < AGrid.ColCount) and
+    (ARow > 0) and
+    (ARow < AGrid.RowCount);
+end;
+
 function TFormEditor.GetSelectedGridId(AGrid: TStringGrid): Integer;
 begin
-  if (AGrid = nil) or (AGrid.Row <= 0) then
+  if AGrid = nil then
+    raise Exception.Create('Выберите запись в таблице');
+
+  if not IsSelectableGridCell(AGrid, 0, AGrid.Row) then
     raise Exception.Create('Выберите запись в таблице');
 
   if Trim(AGrid.Cells[0, AGrid.Row]) = '' then
@@ -237,6 +251,9 @@ begin
   FInitialized := False;
 
   try
+    PageControl1.ActivePage := TabSheet1;
+    PageControl1.TabIndex := 0;
+
     ConnectToDatabase(PQConnection1, SQLTransaction1, SQLQuery1);
 
     SetupCtrGrid(StringGrid1);
@@ -277,6 +294,10 @@ end;
 
 procedure TFormEditor.StringGrid1SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
 begin
+  CanSelect := IsSelectableGridCell(StringGrid1, 1, aRow);
+  if not CanSelect then
+    Exit;
+
   SelectCtrRow(StringGrid1, aRow, Edit2);
 end;
 
@@ -331,6 +352,10 @@ end;
 
 procedure TFormEditor.StringGrid2SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
 begin
+  CanSelect := IsSelectableGridCell(StringGrid2, 2, aRow);
+  if not CanSelect then
+    Exit;
+
   SelectStatRow(StringGrid2, aRow, Edit4, Edit5);
 end;
 
@@ -377,6 +402,10 @@ end;
 
 procedure TFormEditor.StringGrid3SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
 begin
+  CanSelect := IsSelectableGridCell(StringGrid3, 1, aRow);
+  if not CanSelect then
+    Exit;
+
   SelectLytRow(StringGrid3, aRow, Edit7);
 end;
 
@@ -436,6 +465,10 @@ end;
 
 procedure TFormEditor.StringGrid4SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
 begin
+  CanSelect := IsSelectableGridCell(StringGrid4, 4, aRow);
+  if not CanSelect then
+    Exit;
+
   SelectMdlRow(StringGrid4, aRow, Edit9, Edit10, Edit12, Edit13);
   ClearModelImageSelection;
 end;
@@ -504,6 +537,10 @@ end;
 
 procedure TFormEditor.StringGrid5SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
 begin
+  CanSelect := IsSelectableGridCell(StringGrid5, 2, aRow);
+  if not CanSelect then
+    Exit;
+
   SelectCityRow(StringGrid5, aRow, Edit15, ComboBox1);
 end;
 
@@ -563,6 +600,10 @@ end;
 
 procedure TFormEditor.StringGrid6SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
 begin
+  CanSelect := IsSelectableGridCell(StringGrid6, 4, aRow);
+  if not CanSelect then
+    Exit;
+
   SelectAntRow(StringGrid6, aRow, Edit17, ComboBox2, ComboBox3, ComboBox4);
 end;
 
@@ -625,6 +666,10 @@ end;
 
 procedure TFormEditor.StringGrid7SelectCell(Sender: TObject; aCol, aRow: Integer; var CanSelect: Boolean);
 begin
+  CanSelect := IsSelectableGridCell(StringGrid7, 11, aRow);
+  if not CanSelect then
+    Exit;
+
   SelectCmpRow(
     StringGrid7, aRow,
     Edit19, Edit20, Edit21, Edit22, Edit23,

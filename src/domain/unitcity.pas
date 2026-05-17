@@ -46,9 +46,22 @@ const
   CITY_COL_NAME = 1;
   CITY_COL_CTR  = 2;
 
+function IsCityGridCellValid(AGrid: TStringGrid; ACol, ARow: Integer): Boolean;
+begin
+  Result :=
+    Assigned(AGrid) and
+    (ACol >= 0) and
+    (ACol < AGrid.ColCount) and
+    (ARow > 0) and
+    (ARow < AGrid.RowCount);
+end;
+
 function GetSelectedCityId(AGrid: TStringGrid): Integer;
 begin
-  if (AGrid = nil) or (AGrid.Row <= 0) then
+  if AGrid = nil then
+    raise Exception.Create('Выберите запись в таблице');
+
+  if not IsCityGridCellValid(AGrid, CITY_COL_ID, AGrid.Row) then
     raise Exception.Create('Выберите запись в таблице');
 
   if Trim(AGrid.Cells[CITY_COL_ID, AGrid.Row]) = '' then
@@ -160,9 +173,11 @@ end;
 procedure SelectCityRow(AGrid: TStringGrid; ARow: Integer;
   AEditName: TEdit; AComboCtr: TComboBox);
 begin
-  if ARow <= 0 then Exit;
+  if not IsCityGridCellValid(AGrid, CITY_COL_CTR, ARow) then
+    Exit;
 
-  AEditName.Text := AGrid.Cells[CITY_COL_NAME, ARow];
+  if Assigned(AEditName) then
+    AEditName.Text := AGrid.Cells[CITY_COL_NAME, ARow];
   SelectComboByText(AComboCtr, AGrid.Cells[CITY_COL_CTR, ARow]);
 end;
 
